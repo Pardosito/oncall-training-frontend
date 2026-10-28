@@ -185,6 +185,7 @@ The CI deploy workflow takes these from GitHub repository **variables** (not sec
 |---|---|---|---|
 | **Real backend** (default) | `pnpm dev` | backend `pnpm dev` + `pnpm dev:worker` + its docker-compose (`AUTH_MODE=dev`, `MOCK_CLUSTER=fake`) | integration, realistic flows |
 | **Mocks** | `pnpm dev:mocks` | no | building UI fast, demoing states |
+| **MVP demo** (until Nov 19) | `API_PROXY_TARGET=http://<alb-dns> VITE_AUTH_MODE=dev pnpm dev` | backend on EKS (infra INF-140) | the Nov 5 MVP (DECISIONS D-18) |
 
 - **MSW handlers** (`src/mocks/handlers.ts`) are typed from `schema.d.ts`, so they break at compile time when the contract changes.
 - **Session simulator** (`src/mocks/simulator.ts`): an in-memory fake session that moves `STARTING` → (10 s) `INCIDENT_ACTIVE`, with `orders` down. It reacts to a scale/restart of `orders` by recovering after about 4 s and resolving with a computed score. Special mock query flags exercise edge cases: `?mock=busy` returns 409, `?mock=stale` returns stale snapshots, `?mock=fail` times the session out.
@@ -192,6 +193,8 @@ The CI deploy workflow takes these from GitHub repository **variables** (not sec
 - **Playwright e2e** (`e2e/happy-path.spec.ts`): sign in (dev auth) → start scenario → wait for incident → acknowledge → scale `orders` to 2 → see Resolved + score → history shows the session → stats render 2 charts. It runs against the local real-backend mode, or against the deployed CloudFront URL with `E2E_BASE_URL` and a test Cognito user (credentials from env, never committed).
 
 ## 11. Build and deploy
+
+> Not used for the Nov 5 MVP, which runs from `pnpm dev` (DECISIONS D-18). The first deploy is in M2.
 
 - `pnpm build` writes `dist/`. Vite hashes asset names (`assets/*.[hash].js|css`).
 - `deploy.yml` runs on `workflow_dispatch` (optionally on push to `main`):

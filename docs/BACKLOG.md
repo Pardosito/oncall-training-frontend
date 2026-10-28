@@ -16,8 +16,9 @@ Context (1–3 lines)
 
 | Milestone | Due | Goal |
 |---|---|---|
-| **M1 · Foundation** | Thu Oct 29 | Tooling, Carbon, app shell, auth, scenarios against MSW, deployed to CloudFront |
-| **M2 · Incident console** | Thu Nov 19 | Live console with polling, actions, logs and result view against the deployed backend |
+| **M1 · Foundation** | Thu Oct 29 | Tooling, Carbon, app shell, auth, scenarios against MSW |
+| **MVP · Nov 5** | Thu Nov 5 | Start → incident console → result against the API on EKS, through the Vite dev proxy with dev auth (D-18) |
+| **M2 · Incident console** | Thu Nov 19 | The rest of the console (logs, abandon, stale data), Cognito, deployed to CloudFront |
 | **M3 · Insights** | Thu Nov 26 | History, stats (≥2 Carbon charts), leaderboard, Playwright happy path |
 | **M4 · Polish** | after Nov 26 | Accessibility, performance, security and docs finishing touches |
 
@@ -279,7 +280,7 @@ ARCHITECTURE §8.
 - [ ] Unknown id → 404 with the backend error body
 
 ### FE-034 · feat(mocks): add the session simulator state machine
-`feat` `mocks` `incident` · M2 · Depends on: FE-031
+`feat` `mocks` `incident` · MVP · Depends on: FE-031
 
 ARCHITECTURE §10.
 - [ ] `src/mocks/simulator.ts`: in-memory session `STARTING` → (10 s) `INCIDENT_ACTIVE` with `orders` down
@@ -287,13 +288,13 @@ ARCHITECTURE §10.
 - [ ] Unit tests for the transitions
 
 ### FE-035 · feat(mocks): add session, start and dashboard handlers backed by the simulator
-`feat` `mocks` `incident` · M2 · Depends on: FE-034
+`feat` `mocks` `incident` · MVP · Depends on: FE-034
 
 - [ ] `POST /api/sessions` → 201 `{ sessionId }`; `GET /api/sessions/:id`; `GET /api/sessions/:id/dashboard`
 - [ ] Snapshot includes services, replicas, pods and the event timeline
 
 ### FE-036 · feat(mocks): simulate actions, recovery and scoring
-`feat` `mocks` `incident` · M2 · Depends on: FE-035
+`feat` `mocks` `incident` · MVP · Depends on: FE-035
 
 - [ ] `POST /api/sessions/:id/actions` → 202; events appended to the timeline
 - [ ] Scale/restart of `orders` recovers after about 4 s and resolves with a computed score, TTD, TTR, wrong actions
@@ -533,7 +534,7 @@ CONVENTIONS §10 required test.
 ## 11. Deploy (M1)
 
 ### FE-068 · ci(deploy): add the on-demand deploy workflow
-`ci` `deploy` · M1 · Depends on: FE-010, FE-018
+`ci` `deploy` · M2 · Depends on: FE-010, FE-018
 
 ARCHITECTURE §11, DECISIONS D-13. Never triggered by an agent without confirmation.
 - [ ] `.github/workflows/deploy.yml` on `workflow_dispatch`: install → test → build with `VITE_*` from repo **variables**
@@ -543,13 +544,13 @@ ARCHITECTURE §11, DECISIONS D-13. Never triggered by an agent without confirmat
 - [ ] `concurrency` group so two deploys can't overlap
 
 ### FE-069 · docs(deploy): document deploy variables and secrets
-`docs` `deploy` · M1 · Depends on: FE-068
+`docs` `deploy` · M2 · Depends on: FE-068
 
 - [ ] README section listing every repo variable (`VITE_*`, `SITE_BUCKET`, `CLOUDFRONT_DISTRIBUTION_ID`) and secret, and where each comes from (infra Terraform outputs)
 - [ ] Steps to refresh Learner Lab credentials before a deploy
 
 ### FE-070 · chore(deploy): first deploy to CloudFront and smoke check
-`chore` `deploy` `blocked-cross-repo` · M1 · Depends on: FE-068, FE-056
+`chore` `deploy` `blocked-cross-repo` · M2 · Depends on: FE-068, FE-056
 
 Blocked by: infra (bucket, distribution, Cognito callback/logout URLs, DECISIONS O-01/D-14).
 - [ ] Landing loads at the CloudFront URL; sign in and sign out work
@@ -561,26 +562,26 @@ Blocked by: infra (bucket, distribution, Cognito callback/logout URLs, DECISIONS
 ## 12. Incident console (M2)
 
 ### FE-071 · feat(incident): add incident helpers `isTerminal` and `actionLabel`
-`feat` `incident` `good-first-issue` · M2 · Depends on: FE-021
+`feat` `incident` `good-first-issue` · MVP · Depends on: FE-021
 
 - [ ] `isTerminal(state)` for `RESOLVED`/`FAILED`
 - [ ] `actionLabel(action)` → "Scale orders to 2", "Restart worker", "Acknowledge"
 - [ ] Unit tests
 
 ### FE-072 · feat(incident): add `useSession` with 5 s polling
-`feat` `incident` · M2 · Depends on: FE-028, FE-071, FE-035
+`feat` `incident` · MVP · Depends on: FE-028, FE-071, FE-035
 
 - [ ] `qk.sessions.detail(id)`, `refetchInterval` returns `false` once terminal
 - [ ] Test with fake timers: polls while active, stops at terminal
 
 ### FE-073 · feat(incident): add `useDashboard` with 2 s polling
-`feat` `incident` · M2 · Depends on: FE-072
+`feat` `incident` · MVP · Depends on: FE-072
 
 - [ ] `qk.sessions.dashboard(id)`, every 2 s while non-terminal, `refetchIntervalInBackground: false`
 - [ ] Keeps the previous snapshot during refetches (no flicker, no spinner on poll)
 
 ### FE-074 · feat(incident): build the console page layout and console/result switch
-`feat` `incident` · M2 · Depends on: FE-072, FE-073
+`feat` `incident` · MVP · Depends on: FE-072, FE-073
 
 DECISIONS D-17.
 - [ ] `IncidentConsolePage` reads `sessionId`, renders the Grid layout from ARCHITECTURE §5 with skeletons
@@ -588,12 +589,12 @@ DECISIONS D-17.
 - [ ] 404/403 session → error state (never show another user's session)
 
 ### FE-075 · feat(incident): add the console header
-`feat` `incident` · M2 · Depends on: FE-074, FE-061
+`feat` `incident` · MVP · Depends on: FE-074, FE-061
 
 - [ ] Scenario title, `SessionStateTag`, timer slot, **Abandon** button slot
 
 ### FE-076 · feat(incident): add the `IncidentTimer`
-`feat` `incident` · M2 · Depends on: FE-058
+`feat` `incident` · MVP · Depends on: FE-058
 
 - [ ] `mm:ss` since `faultInjectedAt`, ticking every second via `setInterval` in an effect
 - [ ] Shows `--:--` before the fault; freezes at terminal; monospace
@@ -601,13 +602,13 @@ DECISIONS D-17.
 - [ ] Unit test with fake timers
 
 ### FE-077 · feat(incident): show the "Monitoring…" notice before the fault
-`feat` `incident` `good-first-issue` · M2 · Depends on: FE-074
+`feat` `incident` `good-first-issue` · MVP · Depends on: FE-074
 
 - [ ] `STARTING` → `InlineNotification` "Monitoring… the incident will begin shortly"
 - [ ] Disappears when the state becomes `INCIDENT_ACTIVE`
 
 ### FE-078 · feat(incident): add `ServiceTile`
-`feat` `incident` · M2 · Depends on: FE-060
+`feat` `incident` · MVP · Depends on: FE-060
 
 - [ ] Name, `StatusIndicator`, `ready/desired` replicas, latency (monospace); compact tile
 - [ ] Props only, no data fetching; component test
@@ -619,13 +620,13 @@ DECISIONS D-17.
 - [ ] Rows keyed by `pod.name`; expand toggle is keyboard reachable with `aria-expanded`
 
 ### FE-080 · feat(incident): add the `EventTimeline`
-`feat` `incident` · M2 · Depends on: FE-059
+`feat` `incident` · MVP · Depends on: FE-059
 
 - [ ] Last 20 events, newest first, relative time + monospace timestamp
 - [ ] Keyed by `ts + type`; event text rendered as plain text
 
 ### FE-081 · feat(incident): compute which actions are enabled
-`feat` `incident` · M2 · Depends on: FE-071
+`feat` `incident` · MVP · Depends on: FE-071
 
 Pure function, ARCHITECTURE §5.
 - [ ] Only actions in `scenario.availableActions`; targets from dashboard services
@@ -633,24 +634,24 @@ Pure function, ARCHITECTURE §5.
 - [ ] Unit tests for each rule
 
 ### FE-082 · feat(incident): add `useSendAction` with a "queued" toast
-`feat` `incident` · M2 · Depends on: FE-052, FE-071, FE-036
+`feat` `incident` · MVP · Depends on: FE-052, FE-071, FE-036
 
 - [ ] `POST /api/sessions/:id/actions`; 202 → toast "Action queued: Scale orders to 2"
 - [ ] No optimistic dashboard update (DECISIONS D-08)
 
 ### FE-083 · feat(incident): add the action panel with Acknowledge
-`feat` `incident` · M2 · Depends on: FE-081, FE-082
+`feat` `incident` · MVP · Depends on: FE-081, FE-082
 
 - [ ] `ActionPanel` renders the enabled actions; Acknowledge sends immediately (no modal)
 
 ### FE-084 · feat(incident): add Restart deployment with target and confirm modal
-`feat` `incident` · M2 · Depends on: FE-083
+`feat` `incident` · MVP · Depends on: FE-083
 
 - [ ] `Dropdown` of target services (labelled), Carbon danger `Modal` to confirm
 - [ ] Focus returns to the trigger after closing
 
 ### FE-085 · feat(incident): add the Scale deployment modal
-`feat` `incident` · M2 · Depends on: FE-083
+`feat` `incident` · MVP · Depends on: FE-083
 
 - [ ] `ScaleModal` with target `Dropdown` and `NumberInput` limited to 1–3 (labelled, invalid state shown)
 - [ ] Confirm disabled until valid
@@ -662,7 +663,7 @@ Pure function, ARCHITECTURE §5.
 - [ ] Unit test with fake timers
 
 ### FE-087 · feat(incident): handle action error codes
-`feat` `incident` · M2 · Depends on: FE-082, FE-029
+`feat` `incident` · MVP · Depends on: FE-082, FE-029
 
 - [ ] `ACTION_NOT_ALLOWED` → error toast with mapped copy
 - [ ] `SESSION_NOT_ACTIVE` → refetch the session (the view switches to the result)
@@ -695,7 +696,7 @@ CONVENTIONS §8.
 - [ ] Pure diff function (previous vs next snapshot) with unit tests
 
 ### FE-092 · feat(incident): build the `ResultView`
-`feat` `incident` · M2 · Depends on: FE-074, FE-080, FE-058
+`feat` `incident` · MVP · Depends on: FE-074, FE-080, FE-058
 
 - [ ] Outcome (Resolved / Failed + reason), score, TTD, TTR, wrong actions, actions count, full timeline
 - [ ] **Try again** → scenario detail; **See your stats** → `/stats`
@@ -707,7 +708,7 @@ CONVENTIONS §8.
 - [ ] On the transition to terminal, invalidate `qk.me.sessions`, `qk.me.stats()`, `qk.leaderboard()` once
 
 ### FE-094 · test(incident): cover the console happy path
-`test` `incident` · M2 · Depends on: FE-092, FE-085, FE-036
+`test` `incident` · MVP · Depends on: FE-092, FE-085, FE-036
 
 - [ ] With the simulator and fake timers: STARTING notice → incident → acknowledge → scale orders to 2 → Resolved result with score
 
@@ -724,11 +725,11 @@ Blocked by: DECISIONS O-03 (how to find the active session).
 - [ ] Decision recorded in DECISIONS.md
 
 ### FE-097 · chore(incident): verify the console against the deployed backend
-`chore` `incident` `blocked-cross-repo` · M2 · Depends on: FE-094, FE-070
+`chore` `incident` `blocked-cross-repo` · MVP · Depends on: FE-094, FE-125
 
-Blocked by: backend deployed behind CloudFront.
+Blocked by: backend deployed on EKS (MVP: through the dev proxy, FE-125; CloudFront in M2).
 - [ ] Bump `BACKEND_REF`, regenerate types, fix type errors
-- [ ] Full run on CloudFront: start → resolve; note any contract gaps as backend requests
+- [ ] Full run against the API on EKS: start → resolve; note any contract gaps as backend requests
 
 ---
 
@@ -912,3 +913,15 @@ CONVENTIONS §12.
 `docs` `good-first-issue` · M4 · Depends on: FE-118
 
 - [ ] Landing, console mid-incident, result view, stats; short GIF of a full run (CV-ready)
+
+---
+
+## MVP · Nov 5 additions
+
+### FE-125 · chore(setup): point the dev proxy at the deployed ALB for the MVP demo
+`chore` `setup` · MVP · Depends on: FE-007
+
+For the Nov 5 MVP the SPA runs with `pnpm dev` and reaches the API on EKS through the Vite proxy, so it stays same-origin: no CORS, no host in `src/` (DECISIONS D-18).
+- [ ] `API_PROXY_TARGET` (default `http://localhost:3000`, read only in `vite.config.ts`, not a `VITE_*` var) sets the `/api` proxy target, with `changeOrigin: true`
+- [ ] README: MVP demo steps (`API_PROXY_TARGET=http://<alb-dns> VITE_AUTH_MODE=dev pnpm dev`)
+- [ ] Still no host anywhere in `src/`

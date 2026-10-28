@@ -117,8 +117,9 @@ oncall-training-frontend/
 
 | Date | Deliverable relevant to this repo |
 |---|---|
-| Thu Oct 29 | App shell, auth, scenarios screens against MSW, deployed to CloudFront |
-| Thu Nov 19 | Incident console with real polling, actions, logs and result view against the deployed backend |
+| Thu Oct 29 | App shell, auth, scenarios screens against MSW |
+| Thu Nov 5 | **MVP:** start → incident console → result against the API on EKS, run with `pnpm dev` through the dev proxy, dev auth (DECISIONS D-18) |
+| Thu Nov 19 | Full incident console (logs, abandon, stale data) against the deployed backend; Cognito; deployed to CloudFront |
 | Thu Nov 26 | History, stats (≥2 Carbon charts) and leaderboard; Playwright happy path |
 
 ## 9. Glossary

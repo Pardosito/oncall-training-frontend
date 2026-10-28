@@ -31,6 +31,7 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 | D-15 | 2026-10-22 | No global state library; server state in TanStack Query, the rest in URL and local state | Decided |
 | D-16 | 2026-10-22 | Sign-out through Cognito's `/logout` endpoint | Decided |
 | D-17 | 2026-10-22 | The incident console and the result view share one route (`/sessions/:id`) | Decided |
+| D-18 | 2026-10-27 | Nov 5 MVP: `pnpm dev` with the `/api` proxy pointed at the ALB, dev auth, no CloudFront deploy | Decided (temporary until Nov 19) |
 
 ---
 
@@ -96,6 +97,10 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 ### D-17 · One route for console and result
 **Why:** the session id is the same; the screen switches automatically when the polled state becomes terminal, with no navigation race. The result view is linkable from history.
 
+### D-18 · Nov 5 MVP: dev proxy to the ALB, dev auth
+**Why:** the course added a first rough MVP, due Thu Nov 5, with one working flow against the real backend on EKS. CloudFront and Cognito come in M2 (infra D-25). Running `pnpm dev` with the `/api` proxy pointed at the ALB keeps the SPA same-origin, so there's no CORS and no host in `src/`; dev auth stands in for Cognito.
+**What changes until Nov 19:** `API_PROXY_TARGET` sets the proxy target (FE-125); `VITE_AUTH_MODE=dev`; no CloudFront deploy (FE-068 to FE-070 moved to M2). Production builds still refuse dev auth (FE-018).
+
 ---
 
 ## 3. Current limitations
@@ -111,6 +116,7 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 | L-07 | Carbon increases the bundle size | Slower first load on poor networks | Lazy routes, named imports, CloudFront caching |
 | L-08 | Deploys require refreshed Learner Lab credentials | Can't deploy automatically on every merge | Manual workflow; CI doesn't need AWS |
 | L-09 | Desktop-first layout | The console is cramped on phones | Grid stacks columns below `md`; not a target in the MVP |
+| L-10 | Until Nov 19 (MVP, D-18): the app only runs from `pnpm dev` on a demo machine | No public URL | Deployed to CloudFront in M2 |
 
 ---
 
