@@ -1,0 +1,17 @@
+// Carbon with the g100 (dark) theme for the whole app (CONVENTIONS §5, DECISIONS D-03).
+// IBM Plex is self-hosted from the per-family @ibm/plex-* packages; no external font CDN.
+@use "@carbon/react/scss/config" with (
+  $font-path: "@ibm/plex",
+  $use-per-family-plex: true
+);
+@use "@carbon/react/scss/themes";
+@use "@carbon/react/scss/theme" with (
+  $theme: themes.$g100
+);
+@use "@carbon/react";
+@use "./overrides";
+
+body {
+  background: theme.$background;
+  color: theme.$text-primary;
+}
