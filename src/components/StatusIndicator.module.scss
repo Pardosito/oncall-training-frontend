@@ -1,0 +1,27 @@
+@use "@carbon/react/scss/spacing" as *;
+@use "@carbon/react/scss/theme" as *;
+@use "@carbon/react/scss/type" as *;
+
+.indicator {
+  @include type-style("body-compact-01");
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-02;
+  color: $text-primary;
+}
+
+.healthy svg {
+  fill: $support-success;
+}
+
+.degraded svg {
+  fill: $support-warning;
+}
+
+.down svg {
+  fill: $support-error;
+}
+
+.muted svg {
+  fill: $icon-secondary;
+}

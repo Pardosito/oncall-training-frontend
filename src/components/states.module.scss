@@ -1,0 +1,21 @@
+@use "@carbon/react/scss/spacing" as *;
+@use "@carbon/react/scss/theme" as *;
+@use "@carbon/react/scss/type" as *;
+
+.empty {
+  padding: $spacing-07;
+}
+
+.title {
+  @include type-style("heading-03");
+}
+
+.text {
+  @include type-style("body-01");
+  color: $text-secondary;
+}
+
+.block {
+  inline-size: 100%;
+  block-size: $spacing-13;
+}
