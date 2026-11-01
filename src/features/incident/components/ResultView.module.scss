@@ -1,0 +1,53 @@
+@use "@carbon/react/scss/spacing" as *;
+@use "@carbon/react/scss/theme" as *;
+@use "@carbon/react/scss/type" as *;
+
+.result {
+  padding-block: $spacing-07;
+}
+
+.eyebrow {
+  @include type-style("label-01");
+  color: $text-secondary;
+}
+
+.outcome {
+  @include type-style("heading-05");
+}
+
+.outcome:focus {
+  outline: none;
+}
+
+.reason {
+  @include type-style("body-01");
+  color: $text-secondary;
+}
+
+.grid {
+  padding-inline: 0;
+}
+
+.stat {
+  min-block-size: auto;
+}
+
+.label {
+  @include type-style("label-01");
+  color: $text-secondary;
+}
+
+.value {
+  @include type-style("code-02");
+  margin-block-start: $spacing-03;
+}
+
+.buttons {
+  display: flex;
+  gap: $spacing-03;
+}
+
+.heading {
+  @include type-style("heading-02");
+  margin-block-end: $spacing-03;
+}
