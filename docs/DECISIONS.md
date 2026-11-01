@@ -27,11 +27,17 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 | D-11 | 2026-10-22 | Only public config in `VITE_*`; values come from GitHub repo variables at build time | Decided |
 | D-12 | 2026-10-22 | English-only UI, no i18n library | Decided |
 | D-13 | 2026-10-22 | Deploy with a GitHub Actions workflow run on demand: S3 sync with cache headers + CloudFront invalidation | Decided |
-| D-14 | 2026-10-22 | SPA deep-link fallback through a CloudFront Function on the S3 behavior, not custom error responses | **Proposed** (infra) |
+| D-14 | 2026-10-22 | SPA deep-link fallback through a CloudFront Function on the S3 behavior, not custom error responses | Decided (accepted by infra D-14) |
 | D-15 | 2026-10-22 | No global state library; server state in TanStack Query, the rest in URL and local state | Decided |
 | D-16 | 2026-10-22 | Sign-out through Cognito's `/logout` endpoint | Decided |
 | D-17 | 2026-10-22 | The incident console and the result view share one route (`/sessions/:id`) | Decided |
 | D-18 | 2026-10-27 | Nov 5 MVP: `pnpm dev` with the `/api` proxy pointed at the ALB, dev auth, no CloudFront deploy | Decided (temporary until Nov 19) |
+| D-19 | 2026-11-01 | Pin the backend's spec from its unmerged branch (`c94cd07`; a draft from its ARCHITECTURE came first) | Decided (temporary) |
+| D-20 | 2026-11-01 | One auth interface with a dev implementation now; Cognito sign-in and other untestable M1 issues move to M2 | **Proposed** (team) |
+| D-21 | 2026-11-01 | MSW's worker script is served by the `msw/vite` plugin instead of being committed to `public/` | Decided |
+| D-22 | 2026-11-01 | IBM Plex is self-hosted from the per-family `@ibm/plex-*` packages | Decided |
+| D-23 | 2026-11-01 | The API client's base URL is the page origin, and it looks `fetch` up on every call | Decided |
+| D-24 | 2026-11-01 | Toolchain: pnpm 12.15.0, Node 22, TypeScript 6.0.3 pinned (same as the backend) | Decided |
 
 ---
 
@@ -85,7 +91,7 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 ### D-13 · On-demand deploy workflow
 **Why:** Learner Lab credentials expire each session, so a deploy can only run when someone has refreshed the secrets. Hashed assets get a 1-year immutable cache; `index.html` uses `no-cache`, so a deploy only needs to invalidate `/index.html` and `/`.
 
-### D-14 · CloudFront Function for SPA routing (Proposed, needs infra)
+### D-14 · CloudFront Function for SPA routing (Decided: accepted by infra D-14)
 **Why:** deep links like `/sessions/01J…` must load `index.html`. The common fix, custom error responses (403/404 → `/index.html` with 200), applies to the **whole distribution**, so it would also turn real API 404s from `/api/*` into an HTML page with status 200 and break error handling. A viewer-request CloudFront Function on the default (S3) behavior that rewrites extension-less paths to `/index.html` avoids that.
 
 ### D-15 · No global store
@@ -100,6 +106,27 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 ### D-18 · Nov 5 MVP: dev proxy to the ALB, dev auth
 **Why:** the course added a first rough MVP, due Thu Nov 5, with one working flow against the real backend on EKS. CloudFront and Cognito come in M2 (infra D-25). Running `pnpm dev` with the `/api` proxy pointed at the ALB keeps the SPA same-origin, so there's no CORS and no host in `src/`; dev auth stands in for Cognito.
 **What changes until Nov 19:** `API_PROXY_TARGET` sets the proxy target (FE-125); `VITE_AUTH_MODE=dev`; no CloudFront deploy (FE-068 to FE-070 moved to M2). Production builds still refuse dev auth (FE-018).
+
+### D-19 · Spec from the backend's working branch
+**Why:** every API type must come from a spec (AGENTS rule 4), and the frontend work couldn't wait. On Nov 1 the work started from a draft `openapi.json` written from backend ARCHITECTURE §6 and §7.5. The same day the backend generated its real spec (BE-039, contract-first, backend D-28) on `feat/m1-platform`, not yet committed. The frontend copied that file, and on Nov 1 pinned `BACKEND_REF` to backend commit `c94cd07f28fe91f37ec8c755672d4b6c58372376` (pushed on `feat/m1-platform`; spec byte-identical). That branch isn't merged to `main` yet: if its PR is squash-merged, re-pin to the merge commit.
+**What changed when switching:** schema names (`ServiceView`, `PodView`, `RecentEvent`), `ActionRequest` became a discriminated union, `ScenarioPublic` gained `scoring`, `RecentEvent.type` is an enum.
+**Requests to the backend, both done the same day:** `SessionView.actionsCount` (for the result view) and an `ErrorCode` enum for `ErrorBody.error.code`, which `src/api/errors.ts` now derives from. Logs, abandon, history, stats and leaderboard routes aren't in the spec yet; they're M2/M3.
+
+### D-20 · Auth interface; Cognito work moves to M2 (Proposed)
+**Why:** Cognito doesn't exist until M2 (infra D-25) and the MVP runs on dev auth (D-18). `src/auth` exposes one `AuthState` (`status`, `user`, `signIn`, `signOut`) with a dev implementation; components use only `useCurrentUser`, `RequireAuth` and `useSignOut`. The Cognito implementation (FE-040, FE-042, FE-027, FE-045, FE-049) plugs into the same interface in M2. Until then `VITE_AUTH_MODE=cognito` shows a "not available yet" notice.
+**Also deferred** (Front plan §5): the busy-409 notice and auto-retry (FE-065–067; the MVP has no lock, backend D-24; a 409 still shows the mapped message), the landing page (FE-056/057; `/` redirects to `/scenarios`, FE-057's rule for signed-in users) and `api:sync` (FE-020). Needs the team's agreement before the GitHub milestones change.
+
+### D-21 · MSW worker served by the Vite plugin
+**Why:** msw 3 ships `msw/vite`. In `worker-only` mode it serves `/mockServiceWorker.js` in dev, so there's no generated file in `public/` to keep in sync with the msw version. `main.tsx` starts the worker only when `import.meta.env.DEV && VITE_API_MOCKS=true`, through a dynamic import, so no MSW code reaches production bundles (checked with `pnpm build`).
+
+### D-22 · Self-hosted Plex
+**Why:** Carbon's default font path is the `@ibm/plex` package; its CDN is opt-in. pnpm doesn't hoist transitive packages, so the app depends on `@ibm/plex-sans` and `@ibm/plex-mono` directly and sets `$use-per-family-plex: true`. Fonts become hashed assets; no third-party font requests.
+
+### D-23 · Client base URL and lazy fetch
+**Why:** ARCHITECTURE §8 said `baseUrl: ""`. `new Request("/api/…")` throws outside a browser (Vitest), so the client uses `location.origin`: still same-origin, still no hardcoded host. openapi-fetch captures `fetch` when the client is created, which is before MSW patches it in tests, so the client looks `fetch` up on every call.
+
+### D-24 · Toolchain pins
+**Why:** the same pnpm and Node as the backend and infra's `mise.toml`. TypeScript is pinned to 6.0.3 like the backend: the newest major (7, the native port) isn't supported by typescript-eslint's type-checked rules yet. pnpm 12 blocks dependency build scripts; `pnpm-workspace.yaml` allows esbuild and msw and denies the Carbon/Plex telemetry scripts. Prettier skips Markdown so hand-written docs only change when their content does.
 
 ---
 
@@ -117,6 +144,8 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 | L-08 | Deploys require refreshed Learner Lab credentials | Can't deploy automatically on every merge | Manual workflow; CI doesn't need AWS |
 | L-09 | Desktop-first layout | The console is cramped on phones | Grid stacks columns below `md`; not a target in the MVP |
 | L-10 | Until Nov 19 (MVP, D-18): the app only runs from `pnpm dev` on a demo machine | No public URL | Deployed to CloudFront in M2 |
+| L-11 | The pinned spec comes from an unmerged backend branch (D-19) | A squash merge changes the SHA; later backend changes need a re-pin | Re-pin, regenerate types and re-run tests before the EKS run (FE-097) |
+| L-12 | The result view's timeline is the last dashboard snapshot (≤ 20 events) | Long sessions show only the latest 20 events | A full event endpoint, if the backend adds one |
 
 ---
 
@@ -142,8 +171,8 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 
 | ID | Question | Owner | Blocks |
 |---|---|---|---|
-| O-01 | Infra agrees to D-14 (CloudFront Function for SPA fallback, no custom error responses)? | Ian | Deep links in AWS |
+| ~~O-01~~ | ~~Infra agrees to D-14?~~ **Answered:** yes, infra D-14 (2026-10-22) | Ian | — |
 | O-02 | Which ID-token claim holds the display name (`preferred_username`, `email`, `cognito:username`)? Must match the backend (backend O-04) | JP | User menu, leaderboard "You" |
 | O-03 | Does the backend expose a way to find the user's active session (e.g. `GET /api/me/sessions?state=active`), or do we read the latest history item? | JP | "Return to incident" banner |
-| O-04 | Test Cognito user for the deployed e2e: who creates it and where its credentials live (GitHub secrets) | Ian | E2E against CloudFront |
+| ~~O-04~~ | ~~Test Cognito user for the deployed e2e~~ **Answered:** created by an infra script so the password never lands in Terraform state (infra D-22); credentials in GitHub secrets | Ian | — |
 | O-05 | Is the backend repo private? `pnpm api:sync` then needs `gh` auth (a token in CI) | Both | Spec sync in CI |
