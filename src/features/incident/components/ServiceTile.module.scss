@@ -1,0 +1,31 @@
+@use "@carbon/react/scss/spacing" as *;
+@use "@carbon/react/scss/theme" as *;
+@use "@carbon/react/scss/type" as *;
+
+.tile {
+  display: grid;
+  grid-template-columns: minmax(6rem, 1fr) minmax(7rem, 1fr) 2fr;
+  align-items: center;
+  gap: $spacing-05;
+  min-block-size: auto;
+  padding: $spacing-04 $spacing-05;
+}
+
+.name {
+  @include type-style("code-02");
+}
+
+.metrics {
+  display: flex;
+  gap: $spacing-03 $spacing-05;
+  justify-content: flex-end;
+
+  dt {
+    @include type-style("label-01");
+    color: $text-secondary;
+  }
+}
+
+.mono {
+  @include type-style("code-01");
+}

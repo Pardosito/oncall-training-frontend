@@ -1,0 +1,16 @@
+@use "@carbon/react/scss/spacing" as *;
+@use "@carbon/react/scss/type" as *;
+
+.grid {
+  padding-inline: 0;
+  row-gap: $spacing-06;
+}
+
+.heading {
+  @include type-style("heading-02");
+  margin-block-end: $spacing-04;
+}
+
+.events {
+  margin-block-end: $spacing-09;
+}

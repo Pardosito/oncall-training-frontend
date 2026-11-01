@@ -1,0 +1,35 @@
+@use "@carbon/react/scss/spacing" as *;
+@use "@carbon/react/scss/theme" as *;
+@use "@carbon/react/scss/type" as *;
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: max-content 1fr max-content;
+  gap: $spacing-05;
+  padding-block: $spacing-03;
+  border-block-end: 1px solid $border-subtle-01;
+}
+
+.time {
+  @include type-style("code-01");
+  color: $text-secondary;
+}
+
+.summary {
+  @include type-style("body-compact-01");
+}
+
+.relative {
+  @include type-style("helper-text-01");
+  color: $text-helper;
+}
+
+.empty {
+  @include type-style("body-compact-01");
+  color: $text-secondary;
+}
