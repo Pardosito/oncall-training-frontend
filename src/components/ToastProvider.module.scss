@@ -1,0 +1,11 @@
+@use "@carbon/react/scss/spacing" as *;
+
+.region {
+  position: fixed;
+  z-index: 9000;
+  inset-block-end: $spacing-05;
+  inset-inline-end: $spacing-05;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-03;
+}

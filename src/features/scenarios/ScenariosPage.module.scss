@@ -1,0 +1,20 @@
+@use "@carbon/react/scss/spacing" as *;
+@use "@carbon/react/scss/theme" as *;
+@use "@carbon/react/scss/type" as *;
+
+.grid {
+  padding-inline: 0;
+}
+
+.tile {
+  block-size: 100%;
+}
+
+.title {
+  @include type-style("heading-03");
+}
+
+.description {
+  @include type-style("body-01");
+  color: $text-secondary;
+}

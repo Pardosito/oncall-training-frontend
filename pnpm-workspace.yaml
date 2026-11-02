@@ -1,0 +1,26 @@
+# Carbon and IBM Plex packages only run telemetry/notice scripts on install; nothing is built.
+allowBuilds:
+  esbuild: true
+  msw: true
+  "@carbon/colors": false
+  "@carbon/feature-flags": false
+  "@carbon/grid": false
+  "@carbon/icon-helpers": false
+  "@carbon/icons-react": false
+  "@carbon/layout": false
+  "@carbon/motion": false
+  "@carbon/react": false
+  "@carbon/styles": false
+  "@carbon/themes": false
+  "@carbon/type": false
+  "@carbon/utilities": false
+  "@ibm/plex": false
+  "@ibm/plex-mono": false
+  "@ibm/plex-sans": false
+  "@ibm/plex-sans-arabic": false
+  "@ibm/plex-sans-devanagari": false
+  "@ibm/plex-sans-hebrew": false
+  "@ibm/plex-sans-thai": false
+  "@ibm/plex-sans-thai-looped": false
+  "@ibm/plex-serif": false
+  "@parcel/watcher": false

@@ -1,0 +1,20 @@
+@use "@carbon/react/scss/spacing" as *;
+@use "@carbon/react/scss/type" as *;
+
+.panel {
+  block-size: 100%;
+}
+
+.heading {
+  @include type-style("heading-02");
+}
+
+.control {
+  display: flex;
+  align-items: flex-end;
+  gap: $spacing-03;
+
+  > :first-child {
+    flex: 1;
+  }
+}

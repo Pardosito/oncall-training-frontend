@@ -1,0 +1,10 @@
+dist
+coverage
+pnpm-lock.yaml
+src/api/schema.d.ts
+openapi/openapi.json
+playwright-report
+test-results
+
+# Docs are written by hand; keep their diffs to real changes.
+*.md

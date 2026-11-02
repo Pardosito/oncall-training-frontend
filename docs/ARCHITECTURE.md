@@ -37,7 +37,7 @@ Router
 
 | Path | Access | Screen | Main Carbon pieces |
 |---|---|---|---|
-| `/` | public | **Landing**: what the app is, how it works (3 steps), "Sign in" button. Signed-in users are redirected to `/scenarios`. | Grid, Tile, Button |
+| `/` | public | **Landing** **(planned, M2)**: what the app is, how it works (3 steps), "Sign in" button. Signed-in users are redirected to `/scenarios`. Until Cognito lands, `/` always redirects to `/scenarios` (dev auth is always signed in; DECISIONS D-20). | Grid, Tile, Button |
 | `/callback` | public | Finishes the OIDC sign-in, then navigates to the stored return path (default `/scenarios`). | Loading |
 | `/scenarios` | auth | **Scenario list** (one in the MVP) | ClickableTile, Tag |
 | `/scenarios/:scenarioId` | auth | **Scenario detail**: description, time limit, available actions; **Start** button; busy notice on 409 | Button, InlineNotification, ProgressBar (countdown) |
@@ -144,7 +144,7 @@ Session state tags: `STARTING` = gray, `INCIDENT_ACTIVE` = red, `RESOLVED` = gre
 ## 8. API client
 
 - `openapi/openapi.json` is a **copy** of the backend's spec at the ref in `openapi/BACKEND_REF`. `pnpm api:sync` downloads it (via `gh api` from the backend repo at that ref). `pnpm api:types` generates `src/api/schema.d.ts` with `openapi-typescript`. Both files are committed.
-- `src/api/client.ts`: `createClient<paths>({ baseUrl: "" })`. The spec's paths already include `/api`, so the result is a relative same-origin URL. Middleware:
+- `src/api/client.ts`: `createClient<paths>({ baseUrl: location.origin })`. The spec's paths already include `/api`, so every call is same-origin (the origin is spelled out only because `Request` needs an absolute URL in tests; DECISIONS D-23). `fetch` is looked up on every call so MSW can intercept it in tests. Non-2xx responses and network failures become `ApiError` through `unwrap()`. Middleware:
   1. adds `Authorization` from the current OIDC user (or `x-dev-user` in dev auth)
   2. adds `x-request-id` (ULID) for log correlation
   3. turns non-2xx responses into an `ApiError { status, code, message, details, requestId }` that matches the backend's error body
@@ -188,7 +188,8 @@ The CI deploy workflow takes these from GitHub repository **variables** (not sec
 | **MVP demo** (until Nov 19) | `API_PROXY_TARGET=http://<alb-dns> VITE_AUTH_MODE=dev pnpm dev` | backend on EKS (infra INF-140) | the Nov 5 MVP (DECISIONS D-18) |
 
 - **MSW handlers** (`src/mocks/handlers.ts`) are typed from `schema.d.ts`, so they break at compile time when the contract changes.
-- **Session simulator** (`src/mocks/simulator.ts`): an in-memory fake session that moves `STARTING` → (10 s) `INCIDENT_ACTIVE`, with `orders` down. It reacts to a scale/restart of `orders` by recovering after about 4 s and resolving with a computed score. Special mock query flags exercise edge cases: `?mock=busy` returns 409, `?mock=stale` returns stale snapshots, `?mock=fail` times the session out.
+- **Session simulator** (`src/mocks/simulator.ts`): an in-memory fake session that moves `STARTING` → (10 s) `INCIDENT_ACTIVE`, with `orders` scaled to 0 (`orders` down, `gateway` degraded). It follows the backend's rules: scaling `orders` to ≥ 1 is the valid fix and resolves about 4 s later with a score from the scenario's `scoring`; other actions count as wrong actions; time out → `FAILED`. State is derived from the clock on every request, so tests drive it with fake timers. **(planned, M2)** Mock query flags for edge cases: `?mock=busy` returns 409, `?mock=stale` returns stale snapshots, `?mock=fail` times the session out.
+- The MSW worker script is served by the `msw/vite` plugin in dev (nothing in `public/`; DECISIONS D-21).
 - The same handlers run in Vitest through `msw/node` (`src/test/setup.ts`).
 - **Playwright e2e** (`e2e/happy-path.spec.ts`): sign in (dev auth) → start scenario → wait for incident → acknowledge → scale `orders` to 2 → see Resolved + score → history shows the session → stats render 2 charts. It runs against the local real-backend mode, or against the deployed CloudFront URL with `E2E_BASE_URL` and a test Cognito user (credentials from env, never committed).
 
