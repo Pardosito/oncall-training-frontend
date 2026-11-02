@@ -32,7 +32,7 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 | D-16 | 2026-10-22 | Sign-out through Cognito's `/logout` endpoint | Decided |
 | D-17 | 2026-10-22 | The incident console and the result view share one route (`/sessions/:id`) | Decided |
 | D-18 | 2026-10-27 | Nov 5 MVP: `pnpm dev` with the `/api` proxy pointed at the ALB, dev auth, no CloudFront deploy | Decided (temporary until Nov 19) |
-| D-19 | 2026-11-01 | Pin the backend's spec from its unmerged branch (`c94cd07`; a draft from its ARCHITECTURE came first) | Decided (temporary) |
+| D-19 | 2026-11-01 | Pin the backend's spec by commit (`6710d2e`, on backend `main`; a draft from its ARCHITECTURE came first) | Decided |
 | D-20 | 2026-11-01 | One auth interface with a dev implementation now; Cognito sign-in and other untestable M1 issues move to M2 | **Proposed** (team) |
 | D-21 | 2026-11-01 | MSW's worker script is served by the `msw/vite` plugin instead of being committed to `public/` | Decided |
 | D-22 | 2026-11-01 | IBM Plex is self-hosted from the per-family `@ibm/plex-*` packages | Decided |
@@ -108,7 +108,7 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 **What changes until Nov 19:** `API_PROXY_TARGET` sets the proxy target (FE-125); `VITE_AUTH_MODE=dev`; no CloudFront deploy (FE-068 to FE-070 moved to M2). Production builds still refuse dev auth (FE-018).
 
 ### D-19 · Spec from the backend's working branch
-**Why:** every API type must come from a spec (AGENTS rule 4), and the frontend work couldn't wait. On Nov 1 the work started from a draft `openapi.json` written from backend ARCHITECTURE §6 and §7.5. The same day the backend generated its real spec (BE-039, contract-first, backend D-28) on `feat/m1-platform`, not yet committed. The frontend copied that file, and on Nov 1 pinned `BACKEND_REF` to backend commit `c94cd07f28fe91f37ec8c755672d4b6c58372376` (pushed on `feat/m1-platform`; spec byte-identical). That branch isn't merged to `main` yet: if its PR is squash-merged, re-pin to the merge commit.
+**Why:** every API type must come from a spec (AGENTS rule 4), and the frontend work couldn't wait. On Nov 1 the work started from a draft `openapi.json` written from backend ARCHITECTURE §6 and §7.5. The same day the backend generated its real spec (BE-039, contract-first, backend D-28) on `feat/m1-platform`, not yet committed. The frontend copied that file, and on Nov 1 pinned `BACKEND_REF` to backend commit `c94cd07f28fe91f37ec8c755672d4b6c58372376` (pushed on `feat/m1-platform`; spec byte-identical). On Nov 2 the backend rewrote that branch and merged it to `main` through PR #131 (a regular merge, so the SHA is stable), and the frontend re-pinned to backend commit `6710d2e7c64896457410922f80ba918e6812c958`. The spec was byte-identical, so the types didn't change.
 **What changed when switching:** schema names (`ServiceView`, `PodView`, `RecentEvent`), `ActionRequest` became a discriminated union, `ScenarioPublic` gained `scoring`, `RecentEvent.type` is an enum.
 **Requests to the backend, both done the same day:** `SessionView.actionsCount` (for the result view) and an `ErrorCode` enum for `ErrorBody.error.code`, which `src/api/errors.ts` now derives from. Logs, abandon, history, stats and leaderboard routes aren't in the spec yet; they're M2/M3.
 
@@ -144,7 +144,7 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 | L-08 | Deploys require refreshed Learner Lab credentials | Can't deploy automatically on every merge | Manual workflow; CI doesn't need AWS |
 | L-09 | Desktop-first layout | The console is cramped on phones | Grid stacks columns below `md`; not a target in the MVP |
 | L-10 | Until Nov 19 (MVP, D-18): the app only runs from `pnpm dev` on a demo machine | No public URL | Deployed to CloudFront in M2 |
-| L-11 | The pinned spec comes from an unmerged backend branch (D-19) | A squash merge changes the SHA; later backend changes need a re-pin | Re-pin, regenerate types and re-run tests before the EKS run (FE-097) |
+| L-11 | ~~The pinned spec comes from an unmerged backend branch (D-19)~~ Resolved Nov 2: pinned to `6710d2e`, on backend `main` | Later backend changes still need a re-pin | Re-pin, regenerate types and re-run tests before the EKS run (FE-097) |
 | L-12 | The result view's timeline is the last dashboard snapshot (≤ 20 events) | Long sessions show only the latest 20 events | A full event endpoint, if the backend adds one |
 
 ---

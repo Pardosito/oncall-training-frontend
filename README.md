@@ -49,4 +49,4 @@ Every `VITE_*` variable is **public**: it ends up in the bundle. See [`.env.exam
 
 ## API contract
 
-`openapi/openapi.json` is a pinned copy of the backend's spec; `openapi/BACKEND_REF` says which. It's pinned to backend commit `c94cd07` on `feat/m1-platform`, which isn't merged yet; re-pin to the merge commit if that PR is squash-merged (DECISIONS D-19). To adopt a backend version: copy its `openapi/openapi.json`, write the ref to `BACKEND_REF`, run `pnpm api:types`, fix type errors.
+`openapi/openapi.json` is a pinned copy of the backend's spec; `openapi/BACKEND_REF` says which. It's pinned to backend commit `6710d2e`, which is on the backend's `main` (PR #131) (DECISIONS D-19). To adopt a backend version: copy its `openapi/openapi.json`, write the ref to `BACKEND_REF`, run `pnpm api:types`, fix type errors.
