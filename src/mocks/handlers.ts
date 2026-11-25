@@ -6,11 +6,14 @@ import type {
   ActionRequest,
   DashboardSnapshot,
   ErrorBody,
+  LeaderboardResponse,
+  MySessionsResponse,
   ScenarioPublic,
   ScenarioSummary,
   SessionView,
+  StatsResponse,
 } from "@/api/types";
-import { scenarios, toSummary } from "./fixtures";
+import { leaderboard, pastSessions, scenarios, statsFor, toSummary } from "./fixtures";
 import { createSimulator, SimulatorError } from "./simulator";
 
 export const simulator = createSimulator();
@@ -88,4 +91,28 @@ export const handlers = [
       );
     },
   ),
+
+  http.get("*/api/me/sessions", async () => {
+    await latency();
+    return HttpResponse.json<MySessionsResponse>({ items: pastSessions });
+  }),
+
+  http.get<{ queryName: string }>("*/api/me/stats/:queryName", async ({ params }) => {
+    await latency();
+    if (params.queryName !== "score-over-time" && params.queryName !== "ttd-ttr-by-attempt") {
+      return errorResponse(400, "VALIDATION_ERROR", "Unknown stats query.");
+    }
+    return HttpResponse.json<StatsResponse>(statsFor(params.queryName));
+  }),
+
+  http.get<{ scenarioId: string }>("*/api/leaderboard/:scenarioId", async ({ params }) => {
+    await latency();
+    if (!scenarios.some((s) => s.id === params.scenarioId)) {
+      return errorResponse(404, "NOT_FOUND", "Scenario not found.");
+    }
+    return HttpResponse.json<LeaderboardResponse>({
+      ...leaderboard,
+      scenarioId: params.scenarioId,
+    });
+  }),
 ];

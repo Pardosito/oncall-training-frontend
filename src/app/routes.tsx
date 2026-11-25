@@ -2,7 +2,6 @@ import { Navigate, type RouteObject } from "react-router";
 import { CallbackPage, RequireAuth } from "@/auth";
 import { AppShell } from "./AppShell";
 import { NotFoundPage } from "./NotFoundPage";
-import { PlaceholderPage } from "./PlaceholderPage";
 import { RouteError } from "./RouteError";
 
 /** Every screen is lazy-loaded to keep the first load small (CONVENTIONS §4). */
@@ -39,9 +38,20 @@ export const routes: RouteObject[] = [
                   Component: (await import("@/features/incident")).IncidentConsolePage,
                 }),
               },
-              { path: "history", element: <PlaceholderPage title="History" /> },
-              { path: "stats", element: <PlaceholderPage title="Stats" /> },
-              { path: "leaderboard", element: <PlaceholderPage title="Leaderboard" /> },
+              {
+                path: "history",
+                lazy: async () => ({ Component: (await import("@/features/history")).HistoryPage }),
+              },
+              {
+                path: "stats",
+                lazy: async () => ({ Component: (await import("@/features/stats")).StatsPage }),
+              },
+              {
+                path: "leaderboard",
+                lazy: async () => ({
+                  Component: (await import("@/features/leaderboard")).LeaderboardPage,
+                }),
+              },
             ],
           },
           { path: "*", element: <NotFoundPage /> },

@@ -138,7 +138,7 @@ Session state tags: `STARTING` = gray, `INCIDENT_ACTIVE` = red, `RESOLVED` = gre
 
 - Each chart is a feature component that **maps API rows to Carbon Charts' data format** (`{ group, date | key, value }`) in a pure, unit-tested function (`toScoreSeries(rows)`).
 - Chart options: `theme: "g100"`, explicit `height`, axis titles with units, `accessibility` on. A visually hidden data table or a "View as table" toggle is shown for screen readers.
-- Empty state (no sessions yet): a Carbon empty-state tile with a link to Scenarios. Stats can take a few seconds (Athena), so show `SkeletonPlaceholder` with a "Crunching your numbers…" helper. The backend caches results for 5 min.
+- Empty state (no sessions yet): a Carbon empty-state tile with a link to Scenarios. Stats come from DynamoDB (backend D-36) and are fast; each chart tile shows a `SkeletonPlaceholder` while it loads and its own empty or error state. The charts load lazily (Carbon Charts + d3 only on `/stats`) and the chart toolbar's table view is the accessible alternative.
 - 504 `STATS_TIMEOUT`: inline error with a Retry button.
 
 ## 8. API client
