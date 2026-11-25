@@ -18,7 +18,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "api:types": "openapi-typescript openapi/openapi.json -o src/api/schema.d.ts && node scripts/prepend-generated-header.mjs src/api/schema.d.ts"
+    "api:types": "openapi-typescript openapi/openapi.json -o src/api/schema.d.ts && node scripts/prepend-generated-header.mjs src/api/schema.d.ts",
+    "deploy:s3": "bash scripts/deploy-s3.sh"
   },
   "dependencies": {
     "@carbon/icons-react": "^11.91.0",

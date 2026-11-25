@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  Cognito sign-out bounce page (DECISIONS D-25): Cognito only accepts HTTPS logout URLs, so it
+  returns here (bucket HTTPS REST endpoint) and this page sends the user to the SPA on the
+  website endpoint.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Signed out</title>
+  </head>
+  <body>
+    <p>You're signed out.</p>
+    <script>
+      (function () {
+        var host = location.hostname;
+        var bucket = host.split(".s3.")[0];
+        var site =
+          host.indexOf(".s3.") > 0
+            ? "http://" + bucket + ".s3-website-us-east-1.amazonaws.com"
+            : location.origin;
+        location.replace(site + "/");
+      })();
+    </script>
+  </body>
+</html>

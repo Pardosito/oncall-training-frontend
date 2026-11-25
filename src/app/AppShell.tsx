@@ -1,6 +1,8 @@
+import { Logout } from "@carbon/icons-react";
 import {
   Content,
   Header,
+  HeaderGlobalAction,
   HeaderGlobalBar,
   HeaderMenuItem,
   HeaderName,
@@ -8,7 +10,7 @@ import {
   SkipToContent,
 } from "@carbon/react";
 import { Link, Outlet, useLocation } from "react-router";
-import { useCurrentUser } from "@/auth";
+import { useCurrentUser, useSignOut } from "@/auth";
 import styles from "./AppShell.module.scss";
 
 const NAV = [
@@ -22,6 +24,7 @@ const NAV = [
 export function AppShell() {
   const { pathname } = useLocation();
   const user = useCurrentUser();
+  const signOut = useSignOut();
 
   return (
     <>
@@ -51,6 +54,9 @@ export function AppShell() {
         {user ? (
           <HeaderGlobalBar>
             <span className={styles.user}>{user.username}</span>
+            <HeaderGlobalAction aria-label="Sign out" tooltipAlignment="end" onClick={signOut}>
+              <Logout size={20} />
+            </HeaderGlobalAction>
           </HeaderGlobalBar>
         ) : null}
       </Header>
