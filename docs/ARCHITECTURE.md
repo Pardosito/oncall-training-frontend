@@ -55,16 +55,16 @@ If the user has an active session, a **"Return to incident"** banner shows in th
 - `react-oidc-context` wraps `oidc-client-ts`. Settings:
   - `authority = https://cognito-idp.<region>.amazonaws.com/<userPoolId>`
   - `client_id`
-  - `redirect_uri = <origin>/callback`
-  - `response_type = "code"` (PKCE is automatic)
+  - `redirect_uri = VITE_COGNITO_REDIRECT_URI`, default `<origin>/callback`. On the S3 website it is the HTTPS bounce page `https://<site-bucket>.s3.us-east-1.amazonaws.com/auth/callback.html`, which forwards code and state to `/callback` (D-25)
+  - `response_type = "code"`; PKCE only in a secure context (HTTPS or localhost), so it is off on the HTTP website endpoint (D-25)
   - `scope = "openid email profile"`
 - **Sign in**: `auth.signinRedirect({ state: { returnTo } })`. Cognito's managed login page also offers **sign up** and **forgot password**, so the app has no forms for those.
 - **Tokens**: `oidc-client-ts` keeps the user in `sessionStorage` (default). `automaticSilentRenew` uses the refresh token. The API client attaches the **access token**: `Authorization: Bearer <access_token>`.
 - **Sign out**: Cognito doesn't implement the standard OIDC `end_session_endpoint`. Sign out is:
   1. `auth.removeUser()`
-  2. `window.location.assign(`${VITE_COGNITO_DOMAIN}/logout?client_id=…&logout_uri=${origin}/`)`
+  2. `window.location.assign(`${VITE_COGNITO_DOMAIN}/logout?client_id=…&logout_uri=<VITE_COGNITO_LOGOUT_URI or ${origin}/>`)`, on S3 the bounce page `/auth/signed-out.html`
   3. clear the TanStack Query cache
-  This is wrapped in `auth/sign-out.ts`. **(cross-repo)** `logout_uri` must be registered on the Cognito app client.
+  This is `logoutUrl` in `src/auth/oidc-config.ts`, called from `CognitoAuthProvider.tsx`. **(cross-repo)** `logout_uri` must be registered on the Cognito app client.
 - **`RequireAuth`**: if the user isn't authenticated, it stores the current path and calls `signinRedirect`; while auth is loading, it shows a Carbon `Loading`.
 - **401 from the API**: the client tries one silent renew. If that fails, it clears the user and redirects to sign-in.
 - **Identity in the UI**: `useCurrentUser()` returns `{ userId: sub, username }` from the ID token profile. It's used for display and for highlighting the user's own leaderboard rows. **The frontend never sends a userId to the API**; the backend takes it from the token.
@@ -216,6 +216,6 @@ The CI deploy workflow takes these from GitHub repository **variables** (not sec
 | `openapi.json` | backend | Source of all API types; bump `BACKEND_REF` to adopt changes |
 | Same-origin `/api/*` behavior on CloudFront | infra | No CORS; `Authorization` header forwarded; caching disabled |
 | **SPA fallback via a CloudFront Function on the default (S3) behavior only**: rewrite paths without a file extension to `/index.html` | infra | Deep links like `/sessions/123` work on reload. **Don't use distribution-wide custom error responses (403/404 → index.html)**: they would also turn API 404s into `index.html` with status 200 |
-| Cognito app client: callback `…/callback` and logout URL `…/` registered for both `http://localhost:5173` and the CloudFront domain; scopes `openid email profile`; refresh tokens enabled | infra | Sign-in, sign-out, silent renew |
+| Cognito app client: callback `…/callback` and logout URL `…/` registered for `http://localhost:5173` and the site bucket's HTTPS bounce pages (`/auth/callback.html`, `/auth/signed-out.html`, infra D-31); scopes `openid email profile`; refresh tokens enabled | infra | Sign-in, sign-out, silent renew |
 | Cognito managed login with self sign-up enabled | infra | Sign-up without our own forms |
 | Error body `{ error: { code, message, details, requestId } }` and the codes `SESSION_BUSY`, `SESSION_NOT_ACTIVE`, `ACTION_NOT_ALLOWED`, `STATS_TIMEOUT` | backend | Specific UI messages per code |
