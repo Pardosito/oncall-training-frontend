@@ -38,6 +38,7 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 | D-22 | 2026-11-01 | IBM Plex is self-hosted from the per-family `@ibm/plex-*` packages | Decided |
 | D-23 | 2026-11-01 | The API client's base URL is the page origin, and it looks `fetch` up on every call | Decided |
 | D-24 | 2026-11-01 | Toolchain: pnpm 12.15.0, Node 22, TypeScript 6.0.3 pinned (same as the backend) | Decided |
+| D-25 | 2026-11-25 | Served from the S3 website endpoint (no CloudFront): `VITE_API_BASE_URL` for the ALB, Cognito via HTTPS bounce pages, PKCE off on plain HTTP | Decided (replaces the CloudFront setup in AWS) |
 
 ---
 
@@ -129,6 +130,11 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 **Why:** the same pnpm and Node as the backend and infra's `mise.toml`. TypeScript is pinned to 6.0.3 like the backend: the newest major (7, the native port) isn't supported by typescript-eslint's type-checked rules yet. pnpm 12 blocks dependency build scripts; `pnpm-workspace.yaml` allows esbuild and msw and denies the Carbon/Plex telemetry scripts. Prettier skips Markdown so hand-written docs only change when their content does.
 
 ---
+
+### D-25 · S3 website, cross-origin API, Cognito bounce pages
+**Why:** CloudFront isn't available in the lab (infra D-31), so the SPA and the API are on different origins and the app is plain HTTP.
+**How:** `VITE_API_BASE_URL` (the ALB) becomes the client's base URL; unset, requests stay same-origin as before (D-23). Cognito only accepts HTTPS callbacks, so `VITE_COGNITO_REDIRECT_URI` / `VITE_COGNITO_LOGOUT_URI` point at `public/auth/callback.html` and `signed-out.html` on the bucket's HTTPS endpoint, which forward to `/callback` and `/`. PKCE needs Web Crypto, which browsers only expose on HTTPS or localhost, so `disablePKCE` follows `window.isSecureContext`. `pnpm deploy:s3` builds with `.env.aws.local` and syncs to the bucket.
+**Trade-off:** no TLS and no PKCE on the deployed app (lab demo only); same-origin and PKCE come back with CloudFront.
 
 ## 3. Current limitations
 

@@ -1,6 +1,6 @@
 import createClient, { type Middleware } from "openapi-fetch";
 import { ulid } from "ulid";
-import { getAuthHeaders } from "./auth-headers";
+import { getAuthHeaders, handleUnauthorized } from "./auth-headers";
 import { networkError, toApiError } from "./errors";
 import type { paths } from "./schema";
 
@@ -13,21 +13,44 @@ export const requestIdMiddleware: Middleware = {
   },
 };
 
+/** Untouched copies of each request, so a 401 can be replayed once after a silent renew. */
+const replayable = new WeakMap<Request, Request>();
+
+async function withAuthHeaders(request: Request): Promise<Request> {
+  const headers = await getAuthHeaders();
+  for (const [name, value] of Object.entries(headers)) request.headers.set(name, value);
+  return request;
+}
+
+/** Auth headers on every request; on 401, one shared silent renew and one replay (FE-026, FE-027). */
 export const authMiddleware: Middleware = {
   async onRequest({ request }) {
-    const headers = await getAuthHeaders();
-    for (const [name, value] of Object.entries(headers)) request.headers.set(name, value);
-    return request;
+    const authed = await withAuthHeaders(request);
+    replayable.set(authed, authed.clone());
+    return authed;
+  },
+  async onResponse({ request, response }) {
+    if (response.status !== 401) return response;
+    const copy = replayable.get(request);
+    if (!copy) return response;
+    // Another request already renewed the session since this one was sent: just replay.
+    const current = await getAuthHeaders();
+    const stale = Object.entries(current).some(([k, v]) => request.headers.get(k) !== v);
+    if (!stale && !(await handleUnauthorized())) return response;
+    // The replay skips the middleware, so a second 401 is returned as is.
+    return globalThis.fetch(await withAuthHeaders(copy));
   },
 };
 
 /**
  * The only way the app talks to the API (AGENTS rule 3). Paths in the spec already start with
- * /api, so requests stay same-origin: CloudFront in AWS, the Vite proxy in dev. The origin is
- * only spelled out because Request needs an absolute URL outside the browser (tests).
+ * /api. Same-origin by default (the Vite proxy in dev); with the SPA on S3, VITE_API_BASE_URL is
+ * the ALB (D-25). The origin is spelled out because Request needs an absolute URL in tests.
  */
 export const api = createClient<paths>({
-  baseUrl: globalThis.location?.origin ?? "",
+  baseUrl:
+    (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "") ||
+    (globalThis.location?.origin ?? ""),
   // Look fetch up on every call (not once at import) so MSW's patched fetch is used in tests.
   fetch: (request) => globalThis.fetch(request),
 });

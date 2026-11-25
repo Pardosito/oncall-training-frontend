@@ -173,6 +173,9 @@ All `VITE_*` values are **public** and baked into the bundle at build time. `src
 | `VITE_COGNITO_AUTHORITY` | `https://cognito-idp.us-east-1.amazonaws.com/us-east-1_AbC123` | |
 | `VITE_COGNITO_CLIENT_ID` | `3n4b…` | public app client, no secret |
 | `VITE_COGNITO_DOMAIN` | `https://oncall-training.auth.us-east-1.amazoncognito.com` | used for logout |
+| `VITE_COGNITO_REDIRECT_URI` | `https://<site-bucket>.s3.us-east-1.amazonaws.com/auth/callback.html` | optional; default `<origin>/callback` (D-25) |
+| `VITE_COGNITO_LOGOUT_URI` | `https://<site-bucket>.s3.us-east-1.amazonaws.com/auth/signed-out.html` | optional; default `<origin>/` (D-25) |
+| `VITE_API_BASE_URL` | `http://<alb-dns>` | optional; the API's origin when it isn't same-origin (D-25) |
 | `VITE_AUTH_MODE` | `cognito` \| `dev` | `dev` only allowed with `vite dev` |
 | `VITE_DEV_USER` | `alice` | dev auth username |
 | `VITE_API_MOCKS` | `true` \| `false` | starts MSW in the browser (dev only) |
