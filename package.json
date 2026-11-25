@@ -22,6 +22,7 @@
     "deploy:s3": "bash scripts/deploy-s3.sh"
   },
   "dependencies": {
+    "@carbon/charts-react": "^1.27.27",
     "@carbon/icons-react": "^11.91.0",
     "@carbon/react": "^1.119.0",
     "@ibm/plex-mono": "^2.5.0",

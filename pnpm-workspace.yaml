@@ -2,6 +2,8 @@
 allowBuilds:
   esbuild: true
   msw: true
+  "@carbon/charts": false
+  "@carbon/charts-react": false
   "@carbon/colors": false
   "@carbon/feature-flags": false
   "@carbon/grid": false
@@ -14,6 +16,7 @@ allowBuilds:
   "@carbon/themes": false
   "@carbon/type": false
   "@carbon/utilities": false
+  "@carbon/utils-position": false
   "@ibm/plex": false
   "@ibm/plex-mono": false
   "@ibm/plex-sans": false

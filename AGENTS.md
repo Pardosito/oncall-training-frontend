@@ -31,7 +31,7 @@ In scope, all screens in English:
 - **Scenarios**: list and detail; a "Start" button; when another session is running (409), a busy notice with a countdown and automatic retry.
 - **Incident console**: live dashboard (service health, replicas, pods, event timeline), incident timer, action panel, logs viewer, abandon. The result view appears when the session ends.
 - **History**: the user's past sessions.
-- **Stats**: ≥2 charts of the user's performance (from the backend's Athena-backed endpoints).
+- **Stats**: ≥2 charts of the user's performance (from the backend's stats endpoints, computed from DynamoDB: backend D-36).
 - **Leaderboard**: top scores for the scenario.
 - **Per-user separation**: the UI only ever shows the signed-in user's own sessions, history and stats. The leaderboard is the only shared view.
 

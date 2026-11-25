@@ -39,6 +39,7 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 | D-23 | 2026-11-01 | The API client's base URL is the page origin, and it looks `fetch` up on every call | Decided |
 | D-24 | 2026-11-01 | Toolchain: pnpm 12.15.0, Node 22, TypeScript 6.0.3 pinned (same as the backend) | Decided |
 | D-25 | 2026-11-25 | Served from the S3 website endpoint (no CloudFront): `VITE_API_BASE_URL` for the ALB, Cognito via HTTPS bounce pages, PKCE off on plain HTTP | Decided (replaces the CloudFront setup in AWS) |
+| D-26 | 2026-11-25 | History, stats and leaderboard screens: cursor `useInfiniteQuery`, Carbon Charts lazy-loaded with the toolbar table as the text alternative, `isYou` from the API | Decided |
 
 ---
 
@@ -136,6 +137,11 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 **How:** `VITE_API_BASE_URL` (the ALB) becomes the client's base URL; unset, requests stay same-origin as before (D-23). Cognito only accepts HTTPS callbacks, so `VITE_COGNITO_REDIRECT_URI` / `VITE_COGNITO_LOGOUT_URI` point at `public/auth/callback.html` and `signed-out.html` on the bucket's HTTPS endpoint, which forward to `/callback` and `/`. PKCE needs Web Crypto, which browsers only expose on HTTPS or localhost, so `disablePKCE` follows `window.isSecureContext`. `pnpm deploy:s3` builds with `.env.aws.local` and syncs to the bucket.
 **Trade-off:** no TLS and no PKCE on the deployed app (lab demo only); same-origin and PKCE come back with CloudFront.
 
+### D-26 · Data screens
+**History:** `useMySessions` is a `useInfiniteQuery` over `GET /api/me/sessions` (cursor = last `sessionId`), flattened with `select`; "Load more" instead of page numbers. Each row links to `/sessions/:id`, which shows the result view for ended sessions.
+**Stats:** one `useStat(name)` per chart. The mappers (`toScoreSeries`, `toTtdTtrSeries`) are pure and tested; a missing TTD/TTR is left out instead of drawn as 0. Carbon Charts are lazy-loaded from one module so d3 only ships on `/stats`; the chart toolbar's "Show as table" is the text alternative (FE-108).
+**Leaderboard:** the API marks the caller's rows with `isYou`, so the SPA never needs other users' ids (AGENTS rule 7); the row gets `aria-current` and a "You" tag, not color alone.
+
 ## 3. Current limitations
 
 | ID | Limitation | Impact | Mitigation now |
@@ -144,7 +150,7 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 | L-02 | Polling latency (≤ 2 s) and constant requests while a session is active | Not instant; some wasted requests | Paused when the tab is hidden; stops at terminal state |
 | L-03 | Tokens in `sessionStorage` | Readable by any XSS on the page; sign-in is per tab | No `dangerouslySetInnerHTML`, all text escaped; short-lived access tokens |
 | L-04 | The spec copy can lag behind the backend | New backend fields aren't usable until `BACKEND_REF` is bumped | Explicit upgrade PRs |
-| L-05 | Stats can take a few seconds on the first load (Athena) | Slow first paint of charts | Skeletons; backend caches for 5 min |
+| L-05 | Stats are capped at the newest 500 attempts (backend D-36) | Very long histories chart only the latest attempts | Enough for the course; Athena or a summary table if it grows |
 | L-06 | Dark theme only, English only | Less inclusive | Carbon tokens make adding themes cheap later |
 | L-07 | Carbon increases the bundle size | Slower first load on poor networks | Lazy routes, named imports, CloudFront caching |
 | L-08 | Deploys require refreshed Learner Lab credentials | Can't deploy automatically on every merge | Manual workflow; CI doesn't need AWS |

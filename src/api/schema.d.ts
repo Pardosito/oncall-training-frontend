@@ -6,6 +6,219 @@
  */
 
 export interface paths {
+    "/api/leaderboard/{scenarioId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Top scores of a scenario (resolved attempts, every user)
+         * @description The only shared view (AGENTS §3): username and score, never user ids. Ties keep the GSI order.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                };
+                header?: never;
+                path: {
+                    scenarioId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Ranked entries */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LeaderboardResponse"];
+                    };
+                };
+                /** @description Malformed request (`VALIDATION_ERROR`, `MALFORMED_JSON`) */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorBody"];
+                    };
+                };
+                /** @description Missing or invalid credentials (`UNAUTHORIZED`) */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorBody"];
+                    };
+                };
+                /** @description Not found, or not yours (`NOT_FOUND`) */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorBody"];
+                    };
+                };
+                /** @description Internal error (`INTERNAL`) */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorBody"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The caller's session history, newest first */
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                    cursor?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description One page of sessions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MySessionsResponse"];
+                    };
+                };
+                /** @description Malformed request (`VALIDATION_ERROR`, `MALFORMED_JSON`) */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorBody"];
+                    };
+                };
+                /** @description Missing or invalid credentials (`UNAUTHORIZED`) */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorBody"];
+                    };
+                };
+                /** @description Internal error (`INTERNAL`) */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorBody"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/stats/{queryName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One of the caller's performance stats, oldest attempt first
+         * @description `score-over-time`: score of every ended attempt. `ttd-ttr-by-attempt`: time to detect and to resolve per ended attempt. Only the caller's sessions (D-36).
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    queryName: components["schemas"]["StatsQueryName"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Rows for the chart */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StatsResponse"];
+                    };
+                };
+                /** @description Malformed request (`VALIDATION_ERROR`, `MALFORMED_JSON`) */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorBody"];
+                    };
+                };
+                /** @description Missing or invalid credentials (`UNAUTHORIZED`) */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorBody"];
+                    };
+                };
+                /** @description Internal error (`INTERNAL`) */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorBody"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/openapi.json": {
         parameters: {
             query?: never;
@@ -833,9 +1046,32 @@ export interface components {
         EventType: "SESSION_STARTED" | "FAULT_INJECTED" | "ACKNOWLEDGED" | "ACTION" | "VIEW_LOGS" | "RESOLVED" | "FAILED" | "SCORED";
         /** @enum {string} */
         FailureReason: "TIMEOUT" | "ABANDONED" | "ERROR";
+        LeaderboardEntry: {
+            /**
+             * Format: date-time
+             * @example 2026-11-05T18:04:12.000Z
+             */
+            endedAt?: string;
+            isYou: boolean;
+            rank: number;
+            score: number;
+            ttdSeconds?: number;
+            ttrSeconds?: number;
+            username: string;
+            wrongActions: number;
+        };
+        LeaderboardResponse: {
+            entries: components["schemas"]["LeaderboardEntry"][];
+            scenarioId: string;
+        };
         LogsResponse: {
             lines: string[];
             service: string;
+        };
+        MySessionsResponse: {
+            items: components["schemas"]["SessionView"][];
+            /** @example 01JBQ4ZJ8V2N7K3M5P6R8S9T0W */
+            nextCursor?: string;
         };
         PodView: {
             ageSeconds: number;
@@ -877,6 +1113,19 @@ export interface components {
             id: string;
             maxResolveSeconds: number;
             title: string;
+        };
+        ScoreRow: {
+            attempt: number;
+            /**
+             * Format: date-time
+             * @example 2026-11-05T18:04:12.000Z
+             */
+            endedAt: string;
+            scenarioId: string;
+            score: number;
+            /** @example 01JBQ4ZJ8V2N7K3M5P6R8S9T0W */
+            sessionId: string;
+            state: components["schemas"]["SessionState"];
         };
         /** @enum {string} */
         ServiceHealth: "healthy" | "degraded" | "down";
@@ -922,6 +1171,31 @@ export interface components {
             ttdSeconds?: number;
             ttrSeconds?: number;
             wrongActions?: number;
+        };
+        /** @enum {string} */
+        StatsQueryName: "score-over-time" | "ttd-ttr-by-attempt";
+        StatsResponse: {
+            /** @enum {string} */
+            query: "score-over-time";
+            rows: components["schemas"]["ScoreRow"][];
+        } | {
+            /** @enum {string} */
+            query: "ttd-ttr-by-attempt";
+            rows: components["schemas"]["TtdTtrRow"][];
+        };
+        TtdTtrRow: {
+            attempt: number;
+            /**
+             * Format: date-time
+             * @example 2026-11-05T18:04:12.000Z
+             */
+            endedAt: string;
+            scenarioId: string;
+            /** @example 01JBQ4ZJ8V2N7K3M5P6R8S9T0W */
+            sessionId: string;
+            state: components["schemas"]["SessionState"];
+            ttdSeconds: number | null;
+            ttrSeconds: number | null;
         };
     };
     responses: never;
