@@ -1,5 +1,6 @@
 import { act, screen, waitFor, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
+import { qk } from "@/api/query-keys";
 import { ordersDown } from "@/mocks/fixtures";
 import { simulator } from "@/mocks/handlers";
 import { server } from "@/mocks/node";
@@ -83,12 +84,16 @@ describe("incident console", () => {
     expect(screen.getByRole("link", { name: "See your stats" })).toHaveAttribute("href", "/stats");
   });
 
-  it("shows the failed result when time runs out", async () => {
-    renderConsole();
+  it("shows the failed result when time runs out and refreshes history, stats and the leaderboard", async () => {
+    const { queryClient } = renderConsole();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
     await screen.findByText("Monitoring…");
     await advance(ordersDown.warmupSeconds + ordersDown.maxResolveSeconds + 5);
     expect(await screen.findByRole("heading", { name: "Incident failed" })).toBeInTheDocument();
     expect(screen.getByText("The time limit ran out.")).toBeInTheDocument();
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: qk.me.sessions });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: qk.me.stats() });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: qk.leaderboard() });
   });
 
   it("shows not found for a session that isn't yours", async () => {

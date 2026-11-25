@@ -1,5 +1,7 @@
 import {
   Button,
+  InlineNotification,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -9,7 +11,9 @@ import {
   TableRow,
 } from "@carbon/react";
 import { Link } from "react-router";
+import { errorMessage } from "@/api/error-messages";
 import { EmptyState, ErrorState, PageHeader, PageSkeleton, SessionStateTag } from "@/components";
+import { useScenarios } from "@/features/scenarios";
 import { formatDateTime, formatScore } from "@/lib/format-date";
 import { formatDuration } from "@/lib/format-duration";
 import { useDocumentTitle } from "@/lib/useDocumentTitle";
@@ -38,24 +42,51 @@ export function HistoryPage() {
     fetchNextPage,
     isFetchingNextPage,
   } = useMySessions();
+  const scenarios = useScenarios();
+  // Falls back to the id while scenarios load or when one is no longer listed.
+  const titles = new Map((scenarios.data ?? []).map((s) => [s.id, s.title]));
+  const rows = data ?? [];
 
   return (
     <>
       <PageHeader title="History" description="Every incident you've worked on, newest first." />
       {isPending ? (
         <PageSkeleton />
-      ) : isError ? (
+      ) : isError && data === undefined ? (
+        // Only the first page failed: nothing to show, so the page-level error replaces it.
         <ErrorState
           error={error}
           title="Couldn't load your history"
           onRetry={() => void refetch()}
         />
-      ) : data.length === 0 ? (
+      ) : rows.length === 0 ? (
         <EmptyState title="No sessions yet" action={{ label: "Go to scenarios", to: "/scenarios" }}>
           Start a scenario and your attempts will show up here.
         </EmptyState>
       ) : (
         <>
+          {isError ? (
+            // A later page failed: keep the loaded rows and offer Retry for the same page.
+            <Stack gap={4}>
+              <InlineNotification
+                kind="error"
+                lowContrast
+                hideCloseButton
+                title="Couldn't load more sessions"
+                subtitle={errorMessage(error)}
+              />
+              <div>
+                <Button
+                  kind="secondary"
+                  size="md"
+                  disabled={isFetchingNextPage}
+                  onClick={() => void fetchNextPage()}
+                >
+                  Retry
+                </Button>
+              </div>
+            </Stack>
+          ) : null}
           <TableContainer title="Your sessions">
             <Table aria-label="Your sessions" size="md">
               <TableHead>
@@ -66,12 +97,12 @@ export function HistoryPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {data.map((s) => (
+                {rows.map((s) => (
                   <TableRow key={s.sessionId}>
                     <TableCell>
                       <Link to={`/sessions/${s.sessionId}`}>{formatDateTime(s.createdAt)}</Link>
                     </TableCell>
-                    <TableCell>{s.scenarioId}</TableCell>
+                    <TableCell>{titles.get(s.scenarioId) ?? s.scenarioId}</TableCell>
                     <TableCell>
                       <SessionStateTag state={s.state} />
                     </TableCell>
@@ -84,7 +115,7 @@ export function HistoryPage() {
               </TableBody>
             </Table>
           </TableContainer>
-          {hasNextPage ? (
+          {hasNextPage && !isError ? (
             <Button
               kind="tertiary"
               size="md"

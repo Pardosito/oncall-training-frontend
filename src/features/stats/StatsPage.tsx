@@ -52,6 +52,9 @@ export function StatsPage() {
   useDocumentTitle("Stats");
   const score = useStat("score-over-time");
   const ttdTtr = useStat("ttd-ttr-by-attempt");
+  // Empty is decided on the chart data, not the rows: all-null TTD/TTR rows give no points.
+  const scoreSeries = toScoreSeries(score.data ?? []);
+  const ttdTtrSeries = toTtdTtrSeries(ttdTtr.data ?? []);
 
   return (
     <>
@@ -63,17 +66,17 @@ export function StatsPage() {
         <Column sm={4} md={8} lg={8}>
           <ChartTile
             title="Score per attempt"
-            query={{ ...score, empty: (score.data ?? []).length === 0 }}
+            query={{ ...score, empty: scoreSeries.length === 0 }}
           >
-            <StatsChart kind="score" data={toScoreSeries(score.data ?? [])} />
+            <StatsChart kind="score" data={scoreSeries} />
           </ChartTile>
         </Column>
         <Column sm={4} md={8} lg={8}>
           <ChartTile
             title="Time to detect vs time to resolve"
-            query={{ ...ttdTtr, empty: (ttdTtr.data ?? []).length === 0 }}
+            query={{ ...ttdTtr, empty: ttdTtrSeries.length === 0 }}
           >
-            <StatsChart kind="ttd-ttr" data={toTtdTtrSeries(ttdTtr.data ?? [])} />
+            <StatsChart kind="ttd-ttr" data={ttdTtrSeries} />
           </ChartTile>
         </Column>
       </Grid>
