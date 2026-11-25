@@ -14,9 +14,14 @@ cd "$(dirname "$0")/.."
 
 pnpm build --mode aws
 
-aws s3 sync dist/assets "s3://$SITE_BUCKET/assets" --delete \
+echo "Deploying to s3://$SITE_BUCKET" >&2
+# New assets first (old ones stay, so open tabs keep loading their chunks), then index.html and
+# the bounce pages, then prune the assets no build references any more.
+aws s3 sync dist/assets "s3://$SITE_BUCKET/assets" \
   --cache-control "public, max-age=31536000, immutable"
 aws s3 sync dist "s3://$SITE_BUCKET" --delete --exclude "assets/*" \
   --cache-control "no-cache"
+aws s3 sync dist/assets "s3://$SITE_BUCKET/assets" --delete \
+  --cache-control "public, max-age=31536000, immutable"
 
 echo "Deployed to http://$SITE_BUCKET.s3-website-us-east-1.amazonaws.com/" >&2

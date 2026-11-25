@@ -6,6 +6,7 @@ describe("safeReturnTo", () => {
     ["https://evil.example", "/scenarios"],
     ["//evil.example", "/scenarios"],
     ["/\\evil.example", "/scenarios"],
+    ["/\t/evil.example", "/scenarios"],
     ["", "/scenarios"],
     [undefined, "/scenarios"],
   ])("%s → %s", (input, expected) => {
