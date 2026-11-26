@@ -30,7 +30,7 @@ The API is infra's HTTP API (`terraform output api_url`, D-27). It only accepts 
 API_PROXY_TARGET=https://<api-id>.execute-api.us-east-1.amazonaws.com VITE_AUTH_MODE=cognito pnpm dev
 ```
 
-The deployed site (`pnpm deploy:s3`) calls the same URL through `VITE_API_BASE_URL`. Accounts come from infra's `make users` (no self sign-up).
+The deployed site (`pnpm deploy:s3`) calls the same URL through `VITE_API_BASE_URL`. Users create their own account from Cognito's sign-in page ("Create an account", infra D-35).
 
 ## Commands
 
