@@ -6,10 +6,32 @@
   min-block-size: 100vh;
 }
 
-.user {
-  @include type-style("body-compact-01");
+.profile {
+  display: contents;
+}
+
+.panel {
+  inline-size: 16rem;
+}
+
+.panelBody {
   display: flex;
-  align-items: center;
-  padding-inline: $spacing-05;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $spacing-03;
+  padding: $spacing-05;
+  color: $icon-secondary;
+}
+
+.panelLabel {
+  @include type-style("label-01");
+  margin-block-start: $spacing-03;
   color: $text-secondary;
+}
+
+.panelName {
+  @include type-style("heading-compact-02");
+  margin-block-end: $spacing-05;
+  color: $text-primary;
+  overflow-wrap: anywhere;
 }
