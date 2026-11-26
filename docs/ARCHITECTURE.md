@@ -6,9 +6,9 @@ Items marked **(planned)** aren't built yet. Items marked **(cross-repo)** depen
 ## 1. Where the frontend sits
 
 ```
-Browser ── https://<cloudfront-domain> ──► CloudFront
-                                            ├── /*      → S3 site bucket (this repo's dist/)
-                                            └── /api/*  → ALB → backend api (EKS)
+Browser ── http://<site-bucket>.s3-website-us-east-1.amazonaws.com ──► S3 site bucket (dist/, D-25)
+Browser ── https://<api-id>.execute-api.us-east-1.amazonaws.com/api/* ──► API Gateway (CORS, JWT,
+           throttling) → VPC link → internal ALB → backend api (EKS)  (D-27, infra D-33)
 Browser ── redirect ──► Cognito managed login (sign-in) ── redirect back ──► /callback
 ```
 
@@ -175,7 +175,7 @@ All `VITE_*` values are **public** and baked into the bundle at build time. `src
 | `VITE_COGNITO_DOMAIN` | `https://oncall-training.auth.us-east-1.amazoncognito.com` | used for logout |
 | `VITE_COGNITO_REDIRECT_URI` | `https://<site-bucket>.s3.us-east-1.amazonaws.com/auth/callback.html` | optional; default `<origin>/callback` (D-25) |
 | `VITE_COGNITO_LOGOUT_URI` | `https://<site-bucket>.s3.us-east-1.amazonaws.com/auth/signed-out.html` | optional; default `<origin>/` (D-25) |
-| `VITE_API_BASE_URL` | `http://<alb-dns>` | optional; the API's origin when it isn't same-origin (D-25) |
+| `VITE_API_BASE_URL` | `https://<api-id>.execute-api.us-east-1.amazonaws.com` | optional; the API's origin when it isn't same-origin: infra's `api_url` (D-27) |
 | `VITE_AUTH_MODE` | `cognito` \| `dev` | `dev` only allowed with `vite dev` |
 | `VITE_DEV_USER` | `alice` | dev auth username |
 | `VITE_API_MOCKS` | `true` \| `false` | starts MSW in the browser (dev only) |
@@ -188,7 +188,7 @@ The CI deploy workflow takes these from GitHub repository **variables** (not sec
 |---|---|---|---|
 | **Real backend** (default) | `pnpm dev` | backend `pnpm dev` + `pnpm dev:worker` + its docker-compose (`AUTH_MODE=dev`, `MOCK_CLUSTER=fake`) | integration, realistic flows |
 | **Mocks** | `pnpm dev:mocks` | no | building UI fast, demoing states |
-| **MVP demo** (until Nov 19) | `API_PROXY_TARGET=http://<alb-dns> VITE_AUTH_MODE=dev pnpm dev` | backend on EKS (infra INF-140) | the Nov 5 MVP (DECISIONS D-18) |
+| **Deployed API** | `API_PROXY_TARGET=<api_url> VITE_AUTH_MODE=cognito pnpm dev` | backend on EKS behind infra's HTTP API | testing against the real stack (D-27) |
 
 - **MSW handlers** (`src/mocks/handlers.ts`) are typed from `schema.d.ts`, so they break at compile time when the contract changes.
 - **Session simulator** (`src/mocks/simulator.ts`): an in-memory fake session that moves `STARTING` → (10 s) `INCIDENT_ACTIVE`, with `orders` scaled to 0 (`orders` down, `gateway` degraded). It follows the backend's rules: scaling `orders` to ≥ 1 is the valid fix and resolves about 4 s later with a score from the scenario's `scoring`; other actions count as wrong actions; time out → `FAILED`. State is derived from the clock on every request, so tests drive it with fake timers. **(planned, M2)** Mock query flags for edge cases: `?mock=busy` returns 409, `?mock=stale` returns stale snapshots, `?mock=fail` times the session out.
