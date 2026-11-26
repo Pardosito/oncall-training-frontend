@@ -131,11 +131,6 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 ### D-24 · Toolchain pins
 **Why:** the same pnpm and Node as the backend and infra's `mise.toml`. TypeScript is pinned to 6.0.3 like the backend: the newest major (7, the native port) isn't supported by typescript-eslint's type-checked rules yet. pnpm 12 blocks dependency build scripts; `pnpm-workspace.yaml` allows esbuild and msw and denies the Carbon/Plex telemetry scripts. Prettier skips Markdown so hand-written docs only change when their content does.
 
-### D-27 · The API through infra's HTTP API
-**Why:** infra D-33 puts an API Gateway HTTP API in front of an internal ALB. Its URL is HTTPS and never changes, so the bundle no longer needs a rebuild after every `cluster-up`, and the ALB is no longer reachable from browsers.
-**How:** `VITE_API_BASE_URL` = infra's `api_url`. API Gateway answers CORS for the site and rejects requests without a valid Cognito access token, so dev auth (`x-dev-user`) only works against a local backend. No code change: the client already used `VITE_API_BASE_URL` (D-25).
-**Trade-off:** the SPA itself is still HTTP on the S3 website, so PKCE stays off (D-25).
-
 ---
 
 ### D-25 · S3 website, cross-origin API, Cognito bounce pages
@@ -147,6 +142,11 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 **History:** `useMySessions` is a `useInfiniteQuery` over `GET /api/me/sessions` (cursor = last `sessionId`), flattened with `select`; "Load more" instead of page numbers. Each row links to `/sessions/:id`, which shows the result view for ended sessions.
 **Stats:** one `useStat(name)` per chart. The mappers (`toScoreSeries`, `toTtdTtrSeries`) are pure and tested; a missing TTD/TTR is left out instead of drawn as 0. Carbon Charts are lazy-loaded from one module so d3 only ships on `/stats`; the chart toolbar's "Show as table" is the text alternative (FE-108).
 **Leaderboard:** the API marks the caller's rows with `isYou`, so the SPA never needs other users' ids (AGENTS rule 7); the row gets `aria-current` and a "You" tag, not color alone.
+
+### D-27 · The API through infra's HTTP API
+**Why:** infra D-33 puts an API Gateway HTTP API in front of an internal ALB. Its URL is HTTPS and never changes, so the bundle no longer needs a rebuild after every `cluster-up`, and the ALB is no longer reachable from browsers.
+**How:** `VITE_API_BASE_URL` = infra's `api_url`. API Gateway answers CORS for the site and rejects requests without a valid Cognito access token, so dev auth (`x-dev-user`) only works against a local backend. No code change: the client already used `VITE_API_BASE_URL` (D-25).
+**Trade-off:** the SPA itself is still HTTP on the S3 website, so PKCE stays off (D-25).
 
 ## 3. Current limitations
 
