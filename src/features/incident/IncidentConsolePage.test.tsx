@@ -97,6 +97,33 @@ describe("incident console", () => {
     // Simulates the whole 10 min limit in 10 s steps; slower than the 5 s default on CI runners.
   }, 20_000);
 
+  it("abandons after confirmation and shows the abandoned result (FE-089)", async () => {
+    const { user, queryClient } = renderConsole();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    await advance(ordersDown.warmupSeconds + 5);
+    await screen.findByText("Incident active");
+
+    // Cancel keeps the session running.
+    await user.click(screen.getByRole("button", { name: "Abandon…" }));
+    const dialog = await screen.findByRole("dialog", { name: "Abandon this incident?" });
+    await user.click(within(dialog).getByRole("button", { name: "Keep working" }));
+    expect(screen.getByText("Incident active")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Abandon…" }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "Abandon this incident?" })).getByRole("button", {
+        name: "Abandon",
+      }),
+    );
+    expect(await screen.findByText("Abandoning the incident…")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Abandon…" })).toBeDisabled();
+
+    await advance(10);
+    expect(await screen.findByRole("heading", { name: "Incident failed" })).toBeInTheDocument();
+    expect(screen.getByText("The incident was abandoned.")).toBeInTheDocument();
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: qk.leaderboard() });
+  });
+
   it("shows not found for a session that isn't yours", async () => {
     renderWithProviders(null, { routes, route: "/sessions/someone-elses" });
     expect(await screen.findByText("Session not found")).toBeInTheDocument();

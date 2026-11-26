@@ -102,6 +102,14 @@ export const handlers = [
     },
   ),
 
+  http.post<{ sessionId: string }>("*/api/sessions/:sessionId/abandon", async ({ params }) => {
+    await latency();
+    return fromSimulator(
+      () => simulator.abandon(params.sessionId),
+      (accepted) => HttpResponse.json<ActionAccepted>(accepted, { status: 202 }),
+    );
+  }),
+
   http.get("*/api/me/sessions", async () => {
     await latency();
     return HttpResponse.json<MySessionsResponse>({ items: pastSessions });
