@@ -27,7 +27,7 @@ ITESO course project, team **Cafeinomanos**: Ian Rodríguez (infra and orchestra
 ## 3. MVP scope
 
 In scope, all screens in English:
-- **Landing / sign-in** (public): what the app is, a sign-in button (Cognito managed login, which also has sign-up).
+- **Landing / sign-in** (public): what the app is, a sign-in button (Cognito managed login; accounts are invited by infra, infra D-32).
 - **Scenarios**: list and detail; a "Start" button; when another session is running (409), a busy notice with a countdown and automatic retry.
 - **Incident console**: live dashboard (service health, replicas, pods, event timeline), incident timer, action panel, logs viewer, abandon. The result view appears when the session ends.
 - **History**: the user's past sessions.

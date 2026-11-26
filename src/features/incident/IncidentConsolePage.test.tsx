@@ -94,7 +94,8 @@ describe("incident console", () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: qk.me.sessions });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: qk.me.stats() });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: qk.leaderboard() });
-  });
+    // Simulates the whole 10 min limit in 10 s steps; slower than the 5 s default on CI runners.
+  }, 20_000);
 
   it("shows not found for a session that isn't yours", async () => {
     renderWithProviders(null, { routes, route: "/sessions/someone-elses" });
