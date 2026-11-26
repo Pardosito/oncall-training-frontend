@@ -104,7 +104,7 @@ oncall-training-frontend/
 
 1. **Stay in scope** (§3) and **in this repo** (§2). Missing data or endpoints are a request to the backend, not a reason to fake it.
 2. **Never run deploy commands** (`aws s3 sync`, CloudFront invalidations, anything touching AWS) without explicit confirmation.
-3. **The API is only called through `src/api/client.ts`** with relative paths (`/api/...`). The only host is `VITE_API_BASE_URL` (D-25: SPA on S3, API on the ALB). Never hardcode a host, never call `fetch` directly from components.
+3. **The API is only called through `src/api/client.ts`** with relative paths (`/api/...`). The only host is `VITE_API_BASE_URL` (D-25, D-27: SPA on S3, API on infra's HTTP API). Never hardcode a host, never call `fetch` directly from components.
 4. **Types come from the OpenAPI spec.** Don't hand-write API response types. If the spec is missing something, update `openapi/BACKEND_REF`, run `pnpm api:sync && pnpm api:types`, and never edit `schema.d.ts` by hand.
 5. **Carbon first.** Use `@carbon/react` components, Carbon tokens (color, spacing, type) and Carbon icons. No other UI kit, no Tailwind, no hardcoded colors or pixel spacing. See CONVENTIONS §5.
 6. **No secrets in the frontend.** Every `VITE_*` value ends up in the public bundle. Only public IDs (Cognito pool, client id, domain) go there.

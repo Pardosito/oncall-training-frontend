@@ -31,7 +31,7 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 | D-15 | 2026-10-22 | No global state library; server state in TanStack Query, the rest in URL and local state | Decided |
 | D-16 | 2026-10-22 | Sign-out through Cognito's `/logout` endpoint | Decided |
 | D-17 | 2026-10-22 | The incident console and the result view share one route (`/sessions/:id`) | Decided |
-| D-18 | 2026-10-27 | Nov 5 MVP: `pnpm dev` with the `/api` proxy pointed at the ALB, dev auth, no CloudFront deploy | Decided (temporary until Nov 19) |
+| D-18 | 2026-10-27 | Nov 5 MVP: `pnpm dev` with the `/api` proxy pointed at the ALB, dev auth, no CloudFront deploy | Superseded by D-25 and D-27 |
 | D-19 | 2026-11-01 | Pin the backend's spec by commit (`5ff88e6`, on backend `main`; a draft from its ARCHITECTURE came first) | Decided |
 | D-20 | 2026-11-01 | One auth interface with a dev implementation now; Cognito sign-in and other untestable M1 issues move to M2 | **Proposed** (team) |
 | D-21 | 2026-11-01 | MSW's worker script is served by the `msw/vite` plugin instead of being committed to `public/` | Decided |
@@ -40,6 +40,7 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 | D-24 | 2026-11-01 | Toolchain: pnpm 12.15.0, Node 22, TypeScript 6.0.3 pinned (same as the backend) | Decided |
 | D-25 | 2026-11-25 | Served from the S3 website endpoint (no CloudFront): `VITE_API_BASE_URL` for the ALB, Cognito via HTTPS bounce pages, PKCE off on plain HTTP | Decided (replaces the CloudFront setup in AWS) |
 | D-26 | 2026-11-25 | History, stats and leaderboard screens: cursor `useInfiniteQuery`, Carbon Charts lazy-loaded with the toolbar table as the text alternative, `isYou` from the API | Decided |
+| D-27 | 2026-11-26 | `VITE_API_BASE_URL` is infra's HTTP API (`api_url`, HTTPS, stable across cluster-down/up), not the ALB | Decided (infra D-33) |
 
 ---
 
@@ -141,6 +142,11 @@ Add a new entry whenever something is decided or changed; don't rewrite history.
 **History:** `useMySessions` is a `useInfiniteQuery` over `GET /api/me/sessions` (cursor = last `sessionId`), flattened with `select`; "Load more" instead of page numbers. Each row links to `/sessions/:id`, which shows the result view for ended sessions.
 **Stats:** one `useStat(name)` per chart. The mappers (`toScoreSeries`, `toTtdTtrSeries`) are pure and tested; a missing TTD/TTR is left out instead of drawn as 0. Carbon Charts are lazy-loaded from one module so d3 only ships on `/stats`; the chart toolbar's "Show as table" is the text alternative (FE-108).
 **Leaderboard:** the API marks the caller's rows with `isYou`, so the SPA never needs other users' ids (AGENTS rule 7); the row gets `aria-current` and a "You" tag, not color alone.
+
+### D-27 · The API through infra's HTTP API
+**Why:** infra D-33 puts an API Gateway HTTP API in front of an internal ALB. Its URL is HTTPS and never changes, so the bundle no longer needs a rebuild after every `cluster-up`, and the ALB is no longer reachable from browsers.
+**How:** `VITE_API_BASE_URL` = infra's `api_url`. API Gateway answers CORS for the site and rejects requests without a valid Cognito access token, so dev auth (`x-dev-user`) only works against a local backend. No code change: the client already used `VITE_API_BASE_URL` (D-25).
+**Trade-off:** the SPA itself is still HTTP on the S3 website, so PKCE stays off (D-25).
 
 ## 3. Current limitations
 

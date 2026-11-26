@@ -22,15 +22,15 @@ pnpm dev                        # against the backend on :3000 (its `pnpm dev` +
 
 Open http://localhost:5173. With mocks, start **Orders service is not responding**: after ~10 s `orders` goes down; scale it to 1–3 replicas and it resolves a few seconds later.
 
-### Nov 5 MVP demo (API on EKS)
+### Against the API on EKS
 
-The SPA runs from `pnpm dev` and reaches the API through the Vite proxy, so it stays same-origin (no CORS, no host in `src/`; DECISIONS D-18):
+The API is infra's HTTP API (`terraform output api_url`, D-27). It only accepts Cognito tokens, so use Cognito sign-in (the `VITE_COGNITO_*` values in `.env.local`); the Vite proxy keeps it same-origin:
 
 ```bash
-API_PROXY_TARGET=http://<alb-dns> VITE_AUTH_MODE=dev VITE_DEV_USER=<name> pnpm dev
+API_PROXY_TARGET=https://<api-id>.execute-api.us-east-1.amazonaws.com VITE_AUTH_MODE=cognito pnpm dev
 ```
 
-The ALB only accepts the demo machines' IPs (infra INF-138). Check yours with `curl ifconfig.me` the day before.
+The deployed site (`pnpm deploy:s3`) calls the same URL through `VITE_API_BASE_URL`. Accounts come from infra's `make users` (no self sign-up).
 
 ## Commands
 
