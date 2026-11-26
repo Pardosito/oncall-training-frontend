@@ -50,7 +50,7 @@ export function ProfileMenu() {
       >
         <UserAvatar size={20} />
       </HeaderGlobalAction>
-      <HeaderPanel expanded={open} aria-label="Account" className={styles.panel}>
+      <HeaderPanel expanded={open} aria-label="Account">
         {open ? (
           <div id={panelId} className={styles.panelBody}>
             <UserAvatar size={32} aria-hidden="true" />
