@@ -9,7 +9,7 @@ Items marked **(planned)** aren't built yet. Items marked **(cross-repo)** depen
 Browser ── https://<cloudfront-domain> ──► CloudFront
                                             ├── /*      → S3 site bucket (this repo's dist/)
                                             └── /api/*  → ALB → backend api (EKS)
-Browser ── redirect ──► Cognito managed login (sign-in / sign-up) ── redirect back ──► /callback
+Browser ── redirect ──► Cognito managed login (sign-in) ── redirect back ──► /callback
 ```
 
 - The SPA and the API share **one origin**, so there's no CORS. All API calls use relative `/api/...` URLs.
@@ -58,7 +58,7 @@ If the user has an active session, a **"Return to incident"** banner shows in th
   - `redirect_uri = VITE_COGNITO_REDIRECT_URI`, default `<origin>/callback`. On the S3 website it is the HTTPS bounce page `https://<site-bucket>.s3.us-east-1.amazonaws.com/auth/callback.html`, which forwards code and state to `/callback` (D-25)
   - `response_type = "code"`; PKCE only in a secure context (HTTPS or localhost), so it is off on the HTTP website endpoint (D-25)
   - `scope = "openid email profile"`
-- **Sign in**: `auth.signinRedirect({ state: { returnTo } })`. Cognito's managed login page also offers **sign up** and **forgot password**, so the app has no forms for those.
+- **Sign in**: `auth.signinRedirect({ state: { returnTo } })`. Cognito's managed login page also offers **forgot password** and the first-sign-in password change, so the app has no forms for those. There is no self sign-up: infra creates accounts (infra D-32).
 - **Tokens**: `oidc-client-ts` keeps the user in `sessionStorage` (default). `automaticSilentRenew` uses the refresh token. The API client attaches the **access token**: `Authorization: Bearer <access_token>`.
 - **Sign out**: Cognito doesn't implement the standard OIDC `end_session_endpoint`. Sign out is:
   1. `auth.removeUser()`
@@ -217,5 +217,5 @@ The CI deploy workflow takes these from GitHub repository **variables** (not sec
 | Same-origin `/api/*` behavior on CloudFront | infra | No CORS; `Authorization` header forwarded; caching disabled |
 | **SPA fallback via a CloudFront Function on the default (S3) behavior only**: rewrite paths without a file extension to `/index.html` | infra | Deep links like `/sessions/123` work on reload. **Don't use distribution-wide custom error responses (403/404 → index.html)**: they would also turn API 404s into `index.html` with status 200 |
 | Cognito app client: callback `…/callback` and logout URL `…/` registered for `http://localhost:5173` and the site bucket's HTTPS bounce pages (`/auth/callback.html`, `/auth/signed-out.html`, infra D-31); scopes `openid email profile`; refresh tokens enabled | infra | Sign-in, sign-out, silent renew |
-| Cognito managed login with self sign-up enabled | infra | Sign-up without our own forms |
+| Cognito managed login; accounts invited by infra (`make users`, infra D-32), no self sign-up | infra | No account forms in the app |
 | Error body `{ error: { code, message, details, requestId } }` and the codes `SESSION_BUSY`, `SESSION_NOT_ACTIVE`, `ACTION_NOT_ALLOWED`, `STATS_TIMEOUT` | backend | Specific UI messages per code |
