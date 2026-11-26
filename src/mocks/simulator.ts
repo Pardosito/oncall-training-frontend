@@ -9,6 +9,7 @@ import type {
   ScenarioPublic,
   ServiceStatus,
   SessionView,
+  LogsResponse,
 } from "@/api/types";
 
 export const RECOVERY_SECONDS = 4;
@@ -211,6 +212,31 @@ export function createSimulator(now: () => number = () => Date.now()) {
         recentEvents: events,
         availableActions: s.scenario.availableActions,
       };
+    },
+
+    /** VIEW_LOGS: like the backend, 422 for a non-target and 409 unless the incident is active. */
+    logs(sessionId: string, service: string): LogsResponse {
+      const s = get(sessionId);
+      const t = now();
+      if (!s.scenario.availableActions.includes("VIEW_LOGS") || !(service in BASELINE)) {
+        throw new SimulatorError(422, "ACTION_NOT_ALLOWED", "Logs not available");
+      }
+      if (stateAt(s, t) !== "INCIDENT_ACTIVE") {
+        throw new SimulatorError(409, "SESSION_NOT_ACTIVE", "Session is not active");
+      }
+      const health = servicesAt(s, t).find((svc) => svc.name === service)?.health;
+      const line = (level: number, msg: string) =>
+        JSON.stringify({ level, time: t, role: service, msg });
+      const lines =
+        health === "healthy"
+          ? [line(30, "GET /health 200"), line(30, "GET /health 200")]
+          : service === "gateway"
+            ? [
+                line(50, "GET /orders failed: ECONNREFUSED orders:8080"),
+                line(50, "GET /orders failed: timeout after 800ms"),
+              ]
+            : [];
+      return { service, lines };
     },
 
     action(sessionId: string, request: ActionRequest): { actionId: string } {

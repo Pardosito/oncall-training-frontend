@@ -1,11 +1,12 @@
 import { Tile } from "@carbon/react";
 import type { ServiceStatus } from "@/api/types";
 import { StatusIndicator } from "@/components";
+import { PodTable } from "./PodTable";
 import styles from "./ServiceTile.module.scss";
 
-/** One mock service: health, ready/desired replicas and latency. Props only (FE-078). */
+/** One mock service: health, ready/desired replicas, latency and its pods. Props only (FE-078, FE-079). */
 export function ServiceTile({ service }: { service: ServiceStatus }) {
-  const { name, health, readyReplicas, desiredReplicas, latencyMs } = service;
+  const { name, health, readyReplicas, desiredReplicas, latencyMs, pods } = service;
   return (
     <Tile className={styles.tile}>
       <h3 className={styles.name}>{name}</h3>
@@ -20,6 +21,7 @@ export function ServiceTile({ service }: { service: ServiceStatus }) {
           {latencyMs === undefined ? "—" : `${Math.round(latencyMs)} ms`}
         </dd>
       </dl>
+      <PodTable service={name} pods={pods} />
     </Tile>
   );
 }

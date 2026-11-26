@@ -7,6 +7,7 @@ export const qk = {
   sessions: {
     detail: (sessionId: string) => ["sessions", sessionId] as const,
     dashboard: (sessionId: string) => ["sessions", sessionId, "dashboard"] as const,
+    logs: (sessionId: string, service: string) => ["sessions", sessionId, "logs", service] as const,
   },
   me: {
     sessions: ["me", "sessions"] as const,

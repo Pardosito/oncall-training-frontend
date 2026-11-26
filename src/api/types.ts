@@ -19,6 +19,7 @@ export type DashboardEvent = Schemas["RecentEvent"];
 export type ActionRequest = Schemas["ActionRequest"];
 export type ActionAccepted = Schemas["ActionAccepted"];
 export type MySessionsResponse = Schemas["MySessionsResponse"];
+export type LogsResponse = Schemas["LogsResponse"];
 export type StatsQueryName = Schemas["StatsQueryName"];
 export type StatsResponse = Schemas["StatsResponse"];
 export type ScoreRow = Schemas["ScoreRow"];

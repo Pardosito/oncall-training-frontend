@@ -8,6 +8,7 @@ import { actionName } from "@/lib/actions";
 import { formatDuration } from "@/lib/format-duration";
 import { useDocumentTitle } from "@/lib/useDocumentTitle";
 import { useScenario } from "./hooks/useScenario";
+import { BusyNotice } from "./BusyNotice";
 import { useStartSession } from "./hooks/useStartSession";
 import styles from "./ScenarioDetailPage.module.scss";
 
@@ -44,6 +45,10 @@ export function ScenarioDetailPage() {
 
   const { title, description, maxResolveSeconds, warmupSeconds, availableActions } = scenario.data;
 
+  const busy = start.isError && isApiError(start.error) && start.error.code === "SESSION_BUSY";
+  const retryAfter = busy && isApiError(start.error) ? start.error.details.retryAfterSeconds : null;
+  const busySeconds = typeof retryAfter === "number" && retryAfter > 0 ? retryAfter : null;
+
   function handleStart() {
     start.mutate(scenarioId, {
       onSuccess: ({ sessionId }) => void navigate(`/sessions/${sessionId}`),
@@ -62,9 +67,15 @@ export function ScenarioDetailPage() {
         }
       />
       <Stack gap={6}>
-        {start.isError ? (
+        {busySeconds !== null ? (
+          <BusyNotice
+            key={start.submittedAt}
+            retryAfterSeconds={busySeconds}
+            onClose={() => start.reset()}
+          />
+        ) : start.isError ? (
           <InlineNotification
-            kind={isApiError(start.error) && start.error.code === "SESSION_BUSY" ? "info" : "error"}
+            kind="error"
             lowContrast
             title="Couldn't start the scenario"
             subtitle={errorMessage(start.error)}

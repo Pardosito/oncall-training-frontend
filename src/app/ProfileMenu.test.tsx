@@ -20,11 +20,11 @@ describe("profile menu", () => {
   it("signs out and clears the cache", async () => {
     const auth = signedIn();
     const { user, queryClient } = renderWithProviders(null, { routes, route: "/scenarios", auth });
-    queryClient.setQueryData(["me", "sessions"], { items: [] });
+    queryClient.setQueryData(["scenarios"], []);
     await user.click(screen.getByRole("button", { name: "Account" }));
     await user.click(screen.getByRole("button", { name: "Sign out" }));
     expect(auth.signOut).toHaveBeenCalledOnce();
-    expect(queryClient.getQueryData(["me", "sessions"])).toBeUndefined();
+    expect(queryClient.getQueryData(["scenarios"])).toBeUndefined();
   });
 
   it("closes on Escape", async () => {

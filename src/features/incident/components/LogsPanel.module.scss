@@ -1,0 +1,31 @@
+@use "@carbon/react/scss/spacing" as *;
+@use "@carbon/react/scss/theme" as *;
+@use "@carbon/react/scss/type" as *;
+
+.panel {
+  min-block-size: auto;
+}
+
+.heading {
+  @include type-style("heading-compact-02");
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $spacing-03;
+
+  > :first-child {
+    flex: 1 1 10rem;
+  }
+}
+
+.lines {
+  max-inline-size: 100%;
+}
+
+.empty {
+  @include type-style("body-compact-01");
+  color: $text-secondary;
+}

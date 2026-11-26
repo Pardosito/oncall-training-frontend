@@ -97,6 +97,10 @@ describe("scenarios", () => {
     expect(
       await screen.findByText(/another engineer is handling an incident/i),
     ).toBeInTheDocument();
+    // FE-065: a countdown from retryAfterSeconds, and Start stays enabled for a manual retry.
+    expect(screen.getByText(/about 6 min left/i)).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
   });
 });
