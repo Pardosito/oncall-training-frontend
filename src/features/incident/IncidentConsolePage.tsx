@@ -11,6 +11,7 @@ import { LogsPanel } from "./components/LogsPanel";
 import { ResultView } from "./components/ResultView";
 import { ServiceTile } from "./components/ServiceTile";
 import { useDashboard } from "./hooks/useDashboard";
+import { useAbandon } from "./hooks/useAbandon";
 import { useSendAction } from "./hooks/useSendAction";
 import { useSession } from "./hooks/useSession";
 import { actionPanelModel } from "./lib/enabled-actions";
@@ -25,6 +26,7 @@ export function IncidentConsolePage() {
   const dashboard = useDashboard(sessionId, { active: session.isSuccess && !terminal });
   const scenario = useScenario(session.data?.scenarioId ?? "");
   const send = useSendAction(sessionId);
+  const abandon = useAbandon(sessionId);
   const title = scenario.data?.title ?? "Incident";
   useDocumentTitle(terminal ? "Result" : "Incident console");
 
@@ -70,7 +72,12 @@ export function IncidentConsolePage() {
 
   return (
     <>
-      <ConsoleHeader title={title} session={session.data} />
+      <ConsoleHeader
+        title={title}
+        session={session.data}
+        abandoning={abandon.isPending || abandon.isSuccess}
+        onAbandon={() => abandon.mutate()}
+      />
       <Stack gap={5}>
         {session.data.state === "STARTING" ? (
           <InlineNotification

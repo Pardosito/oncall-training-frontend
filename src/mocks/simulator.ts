@@ -13,6 +13,8 @@ import type {
 } from "@/api/types";
 
 export const RECOVERY_SECONDS = 4;
+/** How long the worker takes to end an abandoned session. */
+export const ABANDON_SECONDS = 2;
 const BASELINE: Record<string, number> = { gateway: 1, orders: 2, "worker-svc": 1 };
 
 type SimSession = {
@@ -21,6 +23,8 @@ type SimSession = {
   createdAt: number;
   acknowledgedAt?: number;
   validFixAt?: number;
+  /** When the user asked to abandon; the session fails ABANDON_SECONDS later. */
+  abandonedAt?: number;
   /** Replicas chosen by the user; applied when the session time passes the action time. */
   scaled: { at: number; target: string; replicas: number }[];
   restarts: { at: number; target: string }[];
@@ -64,10 +68,22 @@ export function createSimulator(now: () => number = () => Date.now()) {
     s.validFixAt === undefined ? undefined : s.validFixAt + RECOVERY_SECONDS * 1000;
   const timeoutAt = (s: SimSession) => faultAt(s) + s.scenario.maxResolveSeconds * 1000;
 
+  /** Whichever ending comes first: resolved, abandoned or timed out. */
+  function endOf(s: SimSession): { at: number; kind: "RESOLVED" | "ABANDONED" | "TIMEOUT" } {
+    const endings = [
+      { at: resolvedAt(s), kind: "RESOLVED" as const },
+      {
+        at: s.abandonedAt === undefined ? undefined : s.abandonedAt + ABANDON_SECONDS * 1000,
+        kind: "ABANDONED" as const,
+      },
+      { at: timeoutAt(s), kind: "TIMEOUT" as const },
+    ].filter((e): e is { at: number; kind: typeof e.kind } => e.at !== undefined);
+    return endings.reduce((a, b) => (b.at < a.at ? b : a));
+  }
+
   function stateAt(s: SimSession, t: number): SessionView["state"] {
-    const resolved = resolvedAt(s);
-    if (resolved !== undefined && t >= resolved) return "RESOLVED";
-    if (t >= timeoutAt(s)) return "FAILED";
+    const end = endOf(s);
+    if (t >= end.at) return end.kind === "RESOLVED" ? "RESOLVED" : "FAILED";
     if (t >= faultAt(s)) return "INCIDENT_ACTIVE";
     return "STARTING";
   }
@@ -80,12 +96,17 @@ export function createSimulator(now: () => number = () => Date.now()) {
 
   function timeline(s: SimSession, t: number) {
     const events: SimSession["events"] = [...s.events];
-    events.push({ at: faultAt(s), type: "FAULT_INJECTED", summary: "Incident started" });
-    const resolved = resolvedAt(s);
-    if (resolved !== undefined) {
-      events.push({ at: resolved, type: "RESOLVED", summary: "All services healthy: resolved" });
+    const end = endOf(s);
+    // Abandoned during the warmup: the fault is never injected.
+    if (faultAt(s) < end.at) {
+      events.push({ at: faultAt(s), type: "FAULT_INJECTED", summary: "Incident started" });
+    }
+    if (end.kind === "RESOLVED") {
+      events.push({ at: end.at, type: "RESOLVED", summary: "All services healthy: resolved" });
+    } else if (end.kind === "ABANDONED") {
+      events.push({ at: end.at, type: "FAILED", summary: "Session abandoned" });
     } else {
-      events.push({ at: timeoutAt(s), type: "FAILED", summary: "Time limit reached" });
+      events.push({ at: end.at, type: "FAILED", summary: "Time limit reached" });
     }
     return events.filter((e) => e.at <= t).sort((a, b) => b.at - a.at);
   }
@@ -101,10 +122,12 @@ export function createSimulator(now: () => number = () => Date.now()) {
       wrongActions: s.wrongActions,
       actionsCount: s.actionsCount,
     };
-    if (t >= fault) result.faultInjectedAt = iso(fault);
+    if (t >= fault && !(state === "FAILED" && endOf(s).at < fault)) {
+      result.faultInjectedAt = iso(fault);
+    }
     if (s.acknowledgedAt !== undefined) result.acknowledgedAt = iso(s.acknowledgedAt);
     if (state === "RESOLVED") {
-      const end = resolvedAt(s)!;
+      const end = endOf(s).at;
       const ttr = secondsBetween(fault, end);
       const ttd = s.acknowledgedAt !== undefined ? secondsBetween(fault, s.acknowledgedAt) : ttr;
       Object.assign(result, {
@@ -114,7 +137,11 @@ export function createSimulator(now: () => number = () => Date.now()) {
         score: computeScore(s.scenario.scoring, ttd, ttr, s.wrongActions),
       });
     } else if (state === "FAILED") {
-      Object.assign(result, { endedAt: iso(timeoutAt(s)), failureReason: "TIMEOUT" });
+      const end = endOf(s);
+      Object.assign(result, {
+        endedAt: iso(end.at),
+        failureReason: end.kind === "ABANDONED" ? "ABANDONED" : "TIMEOUT",
+      });
     }
     return result;
   }
@@ -237,6 +264,19 @@ export function createSimulator(now: () => number = () => Date.now()) {
               ]
             : [];
       return { service, lines };
+    },
+
+    /** POST …/abandon: queued, like the backend; the session is FAILED a moment later. */
+    abandon(sessionId: string): { actionId: string } {
+      const s = get(sessionId);
+      const t = now();
+      const state = stateAt(s, t);
+      if (state === "RESOLVED" || state === "FAILED") {
+        throw new SimulatorError(409, "SESSION_NOT_ACTIVE", "Session is not active");
+      }
+      s.abandonedAt ??= t;
+      s.actionsCount += 1;
+      return { actionId: `01JMOCKACTION${String(s.actionsCount).padStart(13, "0")}` };
     },
 
     action(sessionId: string, request: ActionRequest): { actionId: string } {
