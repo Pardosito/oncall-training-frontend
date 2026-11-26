@@ -1,8 +1,6 @@
-import { Logout } from "@carbon/icons-react";
 import {
   Content,
   Header,
-  HeaderGlobalAction,
   HeaderGlobalBar,
   HeaderMenuItem,
   HeaderName,
@@ -10,8 +8,9 @@ import {
   SkipToContent,
 } from "@carbon/react";
 import { Link, Outlet, useLocation } from "react-router";
-import { useCurrentUser, useSignOut } from "@/auth";
+import { useCurrentUser } from "@/auth";
 import styles from "./AppShell.module.scss";
+import { ProfileMenu } from "./ProfileMenu";
 
 const NAV = [
   { to: "/scenarios", label: "Scenarios" },
@@ -24,7 +23,6 @@ const NAV = [
 export function AppShell() {
   const { pathname } = useLocation();
   const user = useCurrentUser();
-  const signOut = useSignOut();
 
   return (
     <>
@@ -53,10 +51,7 @@ export function AppShell() {
         ) : null}
         {user ? (
           <HeaderGlobalBar>
-            <span className={styles.user}>{user.username}</span>
-            <HeaderGlobalAction aria-label="Sign out" tooltipAlignment="end" onClick={signOut}>
-              <Logout size={20} />
-            </HeaderGlobalAction>
+            <ProfileMenu />
           </HeaderGlobalBar>
         ) : null}
       </Header>
