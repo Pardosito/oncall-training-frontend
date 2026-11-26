@@ -7,6 +7,7 @@ import type {
   DashboardSnapshot,
   ErrorBody,
   LeaderboardResponse,
+  LogsResponse,
   MySessionsResponse,
   ScenarioPublic,
   ScenarioSummary,
@@ -79,6 +80,15 @@ export const handlers = [
       (body) => HttpResponse.json<DashboardSnapshot>(body),
     ),
   ),
+
+  http.get<{ sessionId: string }>("*/api/sessions/:sessionId/logs", async ({ params, request }) => {
+    const service = new URL(request.url).searchParams.get("service") ?? "";
+    await latency();
+    return fromSimulator(
+      () => simulator.logs(params.sessionId, service),
+      (body) => HttpResponse.json<LogsResponse>(body),
+    );
+  }),
 
   http.post<{ sessionId: string }, ActionRequest>(
     "*/api/sessions/:sessionId/actions",

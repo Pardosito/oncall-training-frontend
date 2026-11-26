@@ -138,4 +138,27 @@ describe("incident console", () => {
     expect(await screen.findByText(/no longer active/i)).toBeInTheDocument();
     await waitFor(() => expect(sessionCalls).toBeGreaterThan(0));
   });
+
+  it("shows a service's logs on request (FE-088)", async () => {
+    const { user } = renderConsole();
+    expect(await screen.findByRole("heading", { name: "Logs" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "View logs" })).toBeDisabled();
+
+    await advance(ordersDown.warmupSeconds + 5);
+    const view = await screen.findByRole("button", { name: "View logs" });
+    await waitFor(() => expect(view).toBeEnabled());
+    await user.click(view);
+    expect(await screen.findByText(/ECONNREFUSED orders:8080/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Refresh" })).toBeInTheDocument();
+  });
+
+  it("warns when the live data is stale (FE-090)", async () => {
+    server.use(
+      http.get("*/api/sessions/:sessionId/dashboard", ({ params }) =>
+        HttpResponse.json({ ...simulator.dashboard(params.sessionId as string), stale: true }),
+      ),
+    );
+    renderConsole();
+    expect(await screen.findByText("Live data delayed")).toBeInTheDocument();
+  });
 });

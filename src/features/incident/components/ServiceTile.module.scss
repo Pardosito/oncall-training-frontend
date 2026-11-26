@@ -29,3 +29,12 @@
 .mono {
   @include type-style("code-01");
 }
+
+.pods {
+  grid-column: 1 / -1;
+}
+
+.noPods {
+  @include type-style("body-compact-01");
+  color: $text-secondary;
+}

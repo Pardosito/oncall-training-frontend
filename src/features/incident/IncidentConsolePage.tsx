@@ -7,6 +7,7 @@ import { useDocumentTitle } from "@/lib/useDocumentTitle";
 import { ActionPanel } from "./components/ActionPanel";
 import { ConsoleHeader } from "./components/ConsoleHeader";
 import { EventTimeline } from "./components/EventTimeline";
+import { LogsPanel } from "./components/LogsPanel";
 import { ResultView } from "./components/ResultView";
 import { ServiceTile } from "./components/ServiceTile";
 import { useDashboard } from "./hooks/useDashboard";
@@ -56,10 +57,14 @@ export function IncidentConsolePage() {
     );
   }
 
+  const availableActions = snapshot?.availableActions ?? scenario.data?.availableActions ?? [];
+  const serviceNames = snapshot?.services.map((s) => s.name) ?? [];
+  // FE-090: the backend marks an old snapshot `stale`; a failed refetch keeps the last one on screen.
+  const delayed = Boolean(snapshot?.stale) || (dashboard.isRefetchError && snapshot !== undefined);
   const model = actionPanelModel({
     state: session.data.state,
-    availableActions: snapshot?.availableActions ?? scenario.data?.availableActions ?? [],
-    services: snapshot?.services.map((s) => s.name) ?? [],
+    availableActions,
+    services: serviceNames,
     pending: send.isPending && send.variables ? [send.variables.type] : [],
   });
 
@@ -74,6 +79,15 @@ export function IncidentConsolePage() {
             hideCloseButton
             title="Monitoring…"
             subtitle="The incident will begin shortly. Watch the services."
+          />
+        ) : null}
+        {delayed ? (
+          <InlineNotification
+            kind="warning"
+            lowContrast
+            hideCloseButton
+            title="Live data delayed"
+            subtitle="The services below may be a few seconds old. They update as soon as new data arrives."
           />
         ) : null}
         <Grid narrow className={styles.grid}>
@@ -100,7 +114,16 @@ export function IncidentConsolePage() {
             </section>
           </Column>
           <Column sm={4} md={8} lg={5}>
-            <ActionPanel model={model} onAction={(action) => send.mutate(action)} />
+            <Stack gap={5}>
+              <ActionPanel model={model} onAction={(action) => send.mutate(action)} />
+              {availableActions.includes("VIEW_LOGS") && serviceNames.length > 0 ? (
+                <LogsPanel
+                  sessionId={sessionId}
+                  services={serviceNames}
+                  enabled={session.data.state === "INCIDENT_ACTIVE"}
+                />
+              ) : null}
+            </Stack>
           </Column>
           <Column sm={4} md={8} lg={16}>
             <section aria-labelledby="events-heading" className={styles.events}>

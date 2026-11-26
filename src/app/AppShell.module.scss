@@ -31,3 +31,8 @@
   color: $text-primary;
   overflow-wrap: anywhere;
 }
+
+.banner {
+  max-inline-size: none;
+  margin-block-end: $spacing-05;
+}

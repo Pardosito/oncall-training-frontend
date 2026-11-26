@@ -10,6 +10,7 @@ import {
 import { Link, Outlet, useLocation } from "react-router";
 import { useCurrentUser } from "@/auth";
 import styles from "./AppShell.module.scss";
+import { ActiveSessionBanner } from "./ActiveSessionBanner";
 import { ProfileMenu } from "./ProfileMenu";
 
 const NAV = [
@@ -56,6 +57,7 @@ export function AppShell() {
         ) : null}
       </Header>
       <Content id="main-content" className={styles.content}>
+        {user ? <ActiveSessionBanner /> : null}
         <Outlet />
       </Content>
     </>
