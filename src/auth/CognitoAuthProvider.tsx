@@ -48,6 +48,11 @@ function CognitoBridge({
   children: ReactNode;
 }) {
   const oidc = useOidc();
+  // Set when sign-out starts and never reset: the page is navigating to Cognito's /logout. Without
+  // it, removeUser() flips the state to unauthenticated, RequireAuth starts signinRedirect(), and
+  // that navigation can win the race; Cognito's session cookie is still set, so it signs the user
+  // straight back in.
+  const [signingOut, setSigningOut] = useState(false);
 
   // FE-026: the access token on every API request. Registered during render (idempotent) so it's
   // in place before any child query runs. The token is never logged.
@@ -76,7 +81,7 @@ function CognitoBridge({
   const value = useMemo<AuthState>(
     () => ({
       status:
-        isLoading || activeNavigator
+        signingOut || isLoading || activeNavigator
           ? "loading"
           : isAuthenticated
             ? "authenticated"
@@ -89,10 +94,11 @@ function CognitoBridge({
       },
       // FE-045: drop the local session, then end Cognito's (the query cache is cleared by useSignOut).
       signOut: () => {
+        setSigningOut(true);
         void userManager.removeUser().finally(() => window.location.assign(logoutUrl(config)));
       },
     }),
-    [isLoading, activeNavigator, isAuthenticated, user, error, userManager, config],
+    [signingOut, isLoading, activeNavigator, isAuthenticated, user, error, userManager, config],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;
